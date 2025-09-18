@@ -329,7 +329,9 @@ export default function BorderlandsLootTracker() {
               </tfoot>
             </table>
           </div>
-
+          <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-400 border-t border-slate-800/80 bg-black/20 text-center">
+            Total drops logged: <span className="font-semibold text-slate-200">{grandTotal}</span>
+          </div>
           <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-500 border-t border-slate-800/80 bg-black/20">
             Data saved locally.
           </div>
