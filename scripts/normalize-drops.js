@@ -1,4 +1,3 @@
-// scripts/normalize-drops.js
 // Run with: node scripts/normalize-drops.js
 
 import fs from "node:fs";

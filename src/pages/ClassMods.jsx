@@ -55,15 +55,6 @@ export default function ClassMods() {
   );
   const grandTotal = useMemo(() => colTotals.reduce((a, b) => a + b, 0), [colTotals]);
 
-  const rarityMix = (ci) => {
-    const total = colTotals[ci] || 0;
-    return ROWS.map((r, ri) => {
-      const n = state.counts[keyOf(ri, ci)] || 0;
-      const pct = total ? Math.round((n / total) * 1000) / 10 : 0;
-      return { label: r, n, pct, style: rarityStyles[r] };
-    });
-  };
-
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 flex items-start justify-center p-4 sm:p-6 md:p-10">
       <div className="w-full max-w-5xl">
@@ -84,10 +75,10 @@ export default function ClassMods() {
                   <button
                     key={name}
                     onClick={() => setActiveCol(activeCol === idx ? null : idx)}
-                    className={`h-9 w-full rounded-full border text-xs sm:text-sm transition ${
+                    className={`h-9 w-full rounded-full border text-xs sm:text-sm transition-colors duration-200 ${
                       activeCol === idx
                         ? "bg-amber-500/20 border-amber-400/60 text-amber-300 ring-2 ring-amber-400/40"
-                        : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 text-slate-200"
+                        : "bg-slate-800/60 border-slate-700/60 text-slate-200 hover:border-amber-400/50 hover:text-amber-300 hover:bg-slate-800"
                     }`}
                   >
                     {name}
@@ -100,7 +91,7 @@ export default function ClassMods() {
 
         {/* === Card / Table === */}
         <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
-          <div className="relative overflow-x-hidden">
+          <div className="relative">
             <table className="w-full text-sm">
               <colgroup>
                 <col />
@@ -196,7 +187,6 @@ export default function ClassMods() {
                                            bg-black/95 text-white text-[11px] sm:text-xs rounded-md shadow-lg
                                            border border-slate-700 px-2 py-1.5
                                            left-1/2 -translate-x-1/2 mt-2"
-                                style={{ top: "calc(var(--mouse-y, 0px) + 16px)" }}
                               >
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-left">
                                   {mix.map(({label, n, pct, style}) => (

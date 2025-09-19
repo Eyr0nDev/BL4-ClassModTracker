@@ -1,8 +1,8 @@
-// src/components/BossTracker.jsx
 // Responsive boss loot tracker
 // - Mobile (<sm): stacked cards, no horizontal scroll
 // - Desktop (sm+): table layout
 // Includes per-item rates + combined "Any dedicated drop" rate
+
 
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "./Header";
@@ -60,6 +60,9 @@ export default function BossTracker({ bossName, drops }) {
 
   const dedicatedPct = pct(dedicatedTotal);
 
+  const dotClass = (ci) =>
+    ci === 0 ? "bg-slate-400" : "bg-amber-400";
+
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-4 sm:p-6 md:p-10">
       <div className="mx-auto w-full max-w-5xl">
@@ -72,7 +75,7 @@ export default function BossTracker({ bossName, drops }) {
 
         {/* ===== MOBILE: stacked cards (no horizontal scroll) ===== */}
         <section className="sm:hidden space-y-3">
-          {/* Boss chip */}
+          {/* Boss label */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/40 border border-slate-700/60">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <span className="font-medium text-slate-200">{bossName}</span>
@@ -88,7 +91,10 @@ export default function BossTracker({ bossName, drops }) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-slate-200 font-semibold truncate">{label}</p>
+                    <p className="text-slate-200 font-semibold truncate flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${dotClass(ci)}`} />
+                      {label}
+                    </p>
                     <p className="text-[11px] text-slate-400">
                       {p.toFixed(1)}% • Total: {n}
                     </p>
@@ -97,8 +103,10 @@ export default function BossTracker({ bossName, drops }) {
                   <button
                     className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60
                                bg-slate-900/60 hover:bg-slate-900
-                               grid place-items-center select-none transition"
+                               grid place-items-center select-none transition
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
                     title="Tap: +1 • Long-press: −1 (or use Shift on desktop)"
+                    aria-label={`Increment ${label}`}
                     onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
                     onContextMenu={(e) => {
                       e.preventDefault();
@@ -163,10 +171,8 @@ export default function BossTracker({ bossName, drops }) {
                       Boss / Result
                     </th>
                     {COLS.map((c, ci) => (
-                      <th key={ci} className="px-2 py-2 text-center">
-                        <span className="inline-flex items-center gap-2 text-slate-200 font-semibold">
-                          {c}
-                        </span>
+                      <th key={ci} className="px-2 py-2 text-center text-slate-200 font-semibold">
+                        {c}
                       </th>
                     ))}
                   </tr>
@@ -187,8 +193,10 @@ export default function BossTracker({ bossName, drops }) {
                         <td key={ci} className="px-2 py-2 text-center">
                           <button
                             className="w-full h-11 rounded-xl border grid place-items-center select-none transition
-                                       border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:ring-2 focus:ring-amber-500/40"
+                                       border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
+                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
                             title="Click: +1 • Shift+Click: −1"
+                            aria-label={`Increment ${COLS[ci]}`}
                             onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
                           >
                             <span className="text-base font-semibold tabular-nums">{v}</span>
