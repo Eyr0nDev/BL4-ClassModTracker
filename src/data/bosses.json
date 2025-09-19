@@ -1,0 +1,454 @@
+[
+  {
+    "slug": "axemaul",
+    "name": "Axemaul",
+    "drops": [
+      "Bod",
+      "Buzz Axe",
+      "Kill Spring"
+    ]
+  },
+  {
+    "slug": "baby-grunt",
+    "name": "Baby Grunt",
+    "drops": [
+      "Spinning Blade",
+      "Wombo Combo"
+    ]
+  },
+  {
+    "slug": "backhive",
+    "name": "Backhive",
+    "drops": [
+      "Mega Triple Bypass",
+      "Stop Gap"
+    ]
+  },
+  {
+    "slug": "bango",
+    "name": "Bango",
+    "drops": [
+      "Phantom Flame",
+      "Prince Harming",
+      "Stray"
+    ]
+  },
+  {
+    "slug": "battle-wagon",
+    "name": "Battle Wagon",
+    "drops": [
+      "Compleation",
+      "Finnity XXX-L"
+    ]
+  },
+  {
+    "slug": "bio-bulkhead",
+    "name": "Bio-Bulkhead",
+    "drops": [
+      "Budget Deity",
+      "Sho Kunai",
+      "Waterfall"
+    ]
+  },
+  {
+    "slug": "bio-thresher-omega",
+    "name": "Bio-Thresher Omega",
+    "drops": [
+      "Bugbear",
+      "Truck"
+    ]
+  },
+  {
+    "slug": "bramblesong",
+    "name": "Bramblesong",
+    "drops": [
+      "Convergence",
+      "Disco"
+    ]
+  },
+  {
+    "slug": "callous-harbringer-of-annihilating-death",
+    "name": "Callous Harbringer of Annihilating Death",
+    "drops": [
+      "Atling Gun",
+      "Hot Slugger",
+      "Kaleidosplode"
+    ]
+  },
+  {
+    "slug": "core-observer",
+    "name": "Core Observer",
+    "drops": [
+      "Bully",
+      "Defibrillator",
+      "Divided Focus"
+    ]
+  },
+  {
+    "slug": "corrupted",
+    "name": "CorrupTed",
+    "drops": [
+      "Goalkeeper",
+      "Seventh Sense"
+    ]
+  },
+  {
+    "slug": "directive-o",
+    "name": "Directive-O",
+    "drops": [
+      "Bonnie & Clyde",
+      "Rowan's Charge",
+      "Whiskey Foxtrot"
+    ]
+  },
+  {
+    "slug": "driller-hole",
+    "name": "Driller Hole",
+    "drops": [
+      "Fuse",
+      "G.M.R.",
+      "Katagawa's Revenge"
+    ]
+  },
+  {
+    "slug": "experiment-1709-vile-ted",
+    "name": "Experiment 1709 (Vile Ted",
+    "drops": [
+      "Goalkeeper",
+      "Seventh Sense"
+    ]
+  },
+  {
+    "slug": "experiment-42",
+    "name": "Experiment 42",
+    "drops": [
+      "Goalkeeper",
+      "Seventh Sense"
+    ]
+  },
+  {
+    "slug": "fractis",
+    "name": "Fractis",
+    "drops": [
+      "Chuck",
+      "Protean Cell",
+      "UAV"
+    ]
+  },
+  {
+    "slug": "frank-the-furnace",
+    "name": "Frank the Furnace",
+    "drops": [
+      "Bloody Lumberjack",
+      "Chaumurky",
+      "Chuck"
+    ]
+  },
+  {
+    "slug": "genone",
+    "name": "Genone",
+    "drops": [
+      "Oscar Mike",
+      "Recursive"
+    ]
+  },
+  {
+    "slug": "gruntubulous-vork",
+    "name": "Gruntubulous Vork",
+    "drops": [
+      "Spinning Blade",
+      "Wombo Combo"
+    ]
+  },
+  {
+    "slug": "hank-the-welder",
+    "name": "Hank the Welder",
+    "drops": [
+      "Bloody Lumberjack",
+      "Chaumurky",
+      "Chuck"
+    ]
+  },
+  {
+    "slug": "horace",
+    "name": "Horace",
+    "drops": [
+      "Aegon's Dream",
+      "Lucky Clover",
+      "Pacemaker"
+    ]
+  },
+  {
+    "slug": "idolator-sol",
+    "name": "Idolator Sol",
+    "drops": [
+      "Bio-Robot (Harlowe) Furnace (Amon) Technomancer (Vex)",
+      "Dancer (Rafa)",
+      "Golden God",
+      "Goremaster",
+      "Onslaught"
+    ]
+  },
+  {
+    "slug": "immortal-boneface-meathead-riders",
+    "name": "Immortal Boneface (Meathead Riders)",
+    "drops": [
+      "Hellwalker",
+      "Lucian's Flank",
+      "War Paint"
+    ]
+  },
+  {
+    "slug": "leader-willem",
+    "name": "Leader Willem",
+    "drops": [
+      "Firepot",
+      "Rainbow Vomit",
+      "Zipper"
+    ]
+  },
+  {
+    "slug": "lil-grunt-rippa-roadbirds",
+    "name": "Lil Grunt (Rippa Roadbirds)",
+    "drops": [
+      "Spinning Blade",
+      "Wombo Combo"
+    ]
+  },
+  {
+    "slug": "mimicron",
+    "name": "Mimicron",
+    "drops": [
+      "Complex Root",
+      "Luty Madlad",
+      "UAV"
+    ]
+  },
+  {
+    "slug": "moon-maddened-callis",
+    "name": "Moon-Maddened Callis",
+    "drops": [
+      "Gamma Void",
+      "Ohm I Got"
+    ]
+  },
+  {
+    "slug": "pango",
+    "name": "Pango",
+    "drops": [
+      "Phantom Flame",
+      "Prince Harming",
+      "Stray"
+    ]
+  },
+  {
+    "slug": "primordial-guardian-inceptus",
+    "name": "Primordial Guardian Inceptus",
+    "drops": [
+      "Avatar (Vex)",
+      "Elementalist (Amon)",
+      "Extra Medium",
+      "Filantropo (Rafa)",
+      "Husky Friend",
+      "Ravenfire"
+    ]
+  },
+  {
+    "slug": "primordial-guardian-origo",
+    "name": "Primordial Guardian Origo",
+    "drops": [
+      "Atomic Driver (Harlowe)",
+      "Bottled Lightning",
+      "Buster (Rafa)",
+      "Kaoson",
+      "Kindread Spirits (Vex)",
+      "Shatterwight (Amon)",
+      "Watts 4 Dinner"
+    ]
+  },
+  {
+    "slug": "primordial-guardian-radix",
+    "name": "Primordial Guardian Radix",
+    "drops": [
+      "Adrenaline Pump",
+      "Anarchy",
+      "Forge Master (Amon)",
+      "Grenazerker (Rafa)",
+      "Scientist (Harlowe)",
+      "Teen Witch (Vex)"
+    ]
+  },
+  {
+    "slug": "primordial-guardian-timekeeper",
+    "name": "Primordial Guardian Timekeeper",
+    "drops": [
+      "Plasma Coil",
+      "Star Helix"
+    ]
+  },
+  {
+    "slug": "quake-thresher",
+    "name": "Quake Thresher",
+    "drops": [
+      "Buoy",
+      "Darkbeast",
+      "Potato Thrower IV"
+    ]
+  },
+  {
+    "slug": "queen-callis",
+    "name": "Queen Callis",
+    "drops": [
+      "Esgrimidor (Rafa)",
+      "Illusionist (Vex)",
+      "Pandoran Memento",
+      "Queen's Rest",
+      "Skeptic (Harlowe)",
+      "Viking (Amon)"
+    ]
+  },
+  {
+    "slug": "rocken-roller",
+    "name": "Rocken Roller",
+    "drops": [
+      "AF1000",
+      "San Saba Songbird"
+    ]
+  },
+  {
+    "slug": "saddleback",
+    "name": "Saddleback",
+    "drops": [
+      "Hellwalker",
+      "Lucian's Flank",
+      "War Paint"
+    ]
+  },
+  {
+    "slug": "sal-the-engineer-foundry-freaks",
+    "name": "Sal the Engineer (Foundry Freaks)",
+    "drops": [
+      "Bloody Lumberjack",
+      "Chaumurky",
+      "Chuck"
+    ]
+  },
+  {
+    "slug": "shadowpelt",
+    "name": "Shadowpelt",
+    "drops": [
+      "Slippy",
+      "Sparky Shield",
+      "Vamoose"
+    ]
+  },
+  {
+    "slug": "skull-orchid",
+    "name": "Skull Orchid",
+    "drops": [
+      "Oak-Aged Cask",
+      "Roach"
+    ]
+  },
+  {
+    "slug": "skyspanner-kratch",
+    "name": "Skyspanner Kratch",
+    "drops": [
+      "Hellfire",
+      "Hoarder",
+      "Linebacker"
+    ]
+  },
+  {
+    "slug": "sludgemaw",
+    "name": "Sludgemaw",
+    "drops": [
+      "Birt's Bees",
+      "Kickballer",
+      "Onion"
+    ]
+  },
+  {
+    "slug": "splashzone",
+    "name": "Splashzone",
+    "drops": [
+      "Fireworks",
+      "Jelly",
+      "Lead Balloon"
+    ]
+  },
+  {
+    "slug": "sydney-pointylegs",
+    "name": "Sydney Pointylegs",
+    "drops": [
+      "Disc Jockey",
+      "Noisy Cricket",
+      "Swarm"
+    ]
+  },
+  {
+    "slug": "the-divisioner",
+    "name": "The Divisioner",
+    "drops": [
+      "Inkling",
+      "Sideshow"
+    ]
+  },
+  {
+    "slug": "the-experiments",
+    "name": "The Experiments)",
+    "drops": [
+      "Goalkeeper",
+      "Seventh Sense"
+    ]
+  },
+  {
+    "slug": "the-oppressor",
+    "name": "The Oppressor",
+    "drops": [
+      "Asher's Rise",
+      "Blood Analyser",
+      "Streamer"
+    ]
+  },
+  {
+    "slug": "timekeeper",
+    "name": "Timekeeper",
+    "drops": [
+      "Borstel Ballista",
+      "Symmetry",
+      "Timekeeper's New Shield"
+    ]
+  },
+  {
+    "slug": "vile-lictor",
+    "name": "Vile Lictor",
+    "drops": [
+      "Blacksmith (Amon)",
+      "Blockbuster",
+      "Generator (Harlowe)",
+      "Instigator (Rafa)",
+      "Ruby's Grasp",
+      "Super Soldier",
+      "Undead Eye (Vex)"
+    ]
+  },
+  {
+    "slug": "vile-prototype",
+    "name": "Vile Prototype",
+    "drops": [
+      "Heavyweight",
+      "King's Gambit",
+      "Rangefinder"
+    ]
+  },
+  {
+    "slug": "voraxis",
+    "name": "Voraxis",
+    "drops": [
+      "Buoy",
+      "Darkbeast",
+      "Potato Thrower IV"
+    ]
+  }
+]

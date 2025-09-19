@@ -1,4 +1,3 @@
-// src/pages/ClassMods.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 
@@ -71,8 +70,7 @@ export default function ClassMods() {
         {/* Reusable header with back + reset */}
         <Header
           backTo="/"
-          backLabel="Back to Home"
-          title="Class Mod Loot Tracker"
+          title="Class Mods Tracker"
           onReset={() => { if (confirm("Reset all counters?")) setState(defaultState); }}
         />
 

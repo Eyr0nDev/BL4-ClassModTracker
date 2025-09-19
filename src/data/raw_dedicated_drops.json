@@ -1,0 +1,798 @@
+{
+  "source": "https://maxroll.gg/borderlands-4/resources/legendary-item-dedicated-drop-locations",
+  "scrapedAt": "2025-09-19T17:03:06.517Z",
+  "count": {
+    "rows": 44,
+    "bosses": 42
+  },
+  "rows": [
+    {
+      "bosses": [
+        "Splashzone"
+      ],
+      "items": [
+        "Lead Balloon",
+        "Firewerks",
+        "Jelly"
+      ],
+      "prerequisite": "Recruitment Drive (Story)",
+      "location": "Fadefields, Coastal Bonescape, Riptide Grotto",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Voraxis / \"Quake Thresher\""
+      ],
+      "items": [
+        "Darkbeast",
+        "Potato Thower IV",
+        "Buoy"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Fadefields, Coastal Bonescape, \"Timid Kyle's Negelected Opening\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "The Oppressor"
+      ],
+      "items": [
+        "Streamer",
+        "Asher's Rise",
+        "Blood Analyser"
+      ],
+      "prerequisite": "A Lot To Process (Story)",
+      "location": "Fadefields, Dissected Plateau, The Killing Floors",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Bio-Bulkhead"
+      ],
+      "items": [
+        "Waterfall",
+        "Budget Deity",
+        "Sho Kunai"
+      ],
+      "prerequisite": "One Fell Swoop (Story)",
+      "location": "Fadefields, Dissected Plateau, Synthetic Nave",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Primordial Guardian Inceptus"
+      ],
+      "items": [
+        "Ravenfire",
+        "Extra Medium",
+        "Husky Friend",
+        "Filantropo (Rafa)",
+        "Elementalist (Amon)",
+        "Avatar (Vex)"
+      ],
+      "prerequisite": "Acquire the Fadefields Vault Key Fragments",
+      "location": "Fadefields, Dissected Plateau, Arch of Inceptus",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Backhive"
+      ],
+      "items": [
+        "Mega Triple Bypass",
+        "Stop Gap"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Fadefields, Dissected Plateau, \"The Claim\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Horace"
+      ],
+      "items": [
+        "Aegon's Dream",
+        "Pacemaker",
+        "Lucky Clover"
+      ],
+      "prerequisite": "Down and Outbound (Story)",
+      "location": "Fadefields, Hungering Plain, Horace's Oversight",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Sydney Pointylegs"
+      ],
+      "items": [
+        "Noisy Cricket",
+        "Disc Jockey",
+        "Swarm"
+      ],
+      "prerequisite": "N/A",
+      "location": "Fadefields, Hungering Plain, \"The Prospects\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Sludgemaw"
+      ],
+      "items": [
+        "Onion",
+        "Birt's Bees",
+        "Kickballer"
+      ],
+      "prerequisite": "Null and Void (Side) All Charged Up (Side)",
+      "location": "Fadefields, Idolator's Noose",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Idolator Sol"
+      ],
+      "items": [
+        "Goremaster",
+        "Onslaught",
+        "Golden God",
+        "Dancer (Rafa)",
+        "Bio-Robot (Harlowe) Furnace (Amon) Technomancer (Vex)"
+      ],
+      "prerequisite": "Rush the Gate (Story)",
+      "location": "Fadefields, Idolator's Noose, Fortress Indomita",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Frank the Furnace, Hank the Welder, Sal the Engineer (Foundry Freaks)"
+      ],
+      "items": [
+        "Chaumurky",
+        "Chuck",
+        "Bloody Lumberjack"
+      ],
+      "prerequisite": "N/A",
+      "location": "Fadefields, Idolator's Noose, \"The Pitted Stain\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Mimicron"
+      ],
+      "items": [
+        "Complex Root",
+        "UAV",
+        "Luty Madlad"
+      ],
+      "prerequisite": "N/A",
+      "location": "Fadefields, Idolator's Noose, \"Tipping Point\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Core Observer"
+      ],
+      "items": [
+        "Defibrillator",
+        "Divided Focus",
+        "Bully"
+      ],
+      "prerequisite": "N/A",
+      "location": "Fadefields, The Howl, \"Blacklime Bunker\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Skyspanner Kratch"
+      ],
+      "items": [
+        "Linebacker",
+        "Hellfire",
+        "Hoarder"
+      ],
+      "prerequisite": "Shadow of the Mountain (Story)",
+      "location": "Terminus Range, Cuspid Climb",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Saddleback, Immortal Boneface (Meathead Riders)"
+      ],
+      "items": [
+        "Lucian's Flank",
+        "Hellwalker",
+        "War Paint"
+      ],
+      "prerequisite": "N/A",
+      "location": "Terminus Range, Cuspid Climb, \"The Old Scrape\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Shadowpelt"
+      ],
+      "items": [
+        "Sparky Shield",
+        "Vamoose",
+        "Slippy"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Terminus Range, Cuspid Climb, \"Whistler's Maw\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Skull Orchid"
+      ],
+      "items": [
+        "Roach",
+        "Oak-Aged Cask"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Terminus Range, Grindstone of the Worthy, \"Embossed Fault\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Callous Harbringer of Annihilating Death"
+      ],
+      "items": [
+        "Hot Slugger",
+        "Atling Gun",
+        "Kaleidosplode"
+      ],
+      "prerequisite": "N/A",
+      "location": "Terminus Range, Heart of the Mountain, \"Craven's Nook\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Bramblesong"
+      ],
+      "items": [
+        "Convergence",
+        "Disco"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Terminus Range, Stoneblood Forest, \"Bittervein\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Battle Wagon"
+      ],
+      "items": [
+        "Finnity XXX-L",
+        "Compleation"
+      ],
+      "prerequisite": "N/A",
+      "location": "Terminus Range, Stoneblood Forest, \"The Lowering March\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Primordial Guardian Origo"
+      ],
+      "items": [
+        "Bottled Lightning",
+        "Kaoson",
+        "Watts 4 Dinner",
+        "Shatterwight (Amon)",
+        "Kindread Spirits (Vex)",
+        "Buster (Rafa)",
+        "Atomic Driver (Harlowe)"
+      ],
+      "prerequisite": "Acquire the Terminus Range Vault Key Fragments",
+      "location": "Terminus Range, The Low Leys, Arch of Origo",
+      "region": null
+    },
+    {
+      "bosses": [
+        "The Divisioner"
+      ],
+      "items": [
+        "Sideshow",
+        "Inkling"
+      ],
+      "prerequisite": "N/A",
+      "location": "Terminus Range, The Low Leys, \"The Wireworks\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Vile Prototype"
+      ],
+      "items": [
+        "Rangefinder",
+        "Heavyweight",
+        "King's Gambit"
+      ],
+      "prerequisite": "Dark Subject (Story)",
+      "location": "Terminus Range, Windspear, Lictor's Black Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Vile Lictor"
+      ],
+      "items": [
+        "Super Soldier",
+        "Blockbuster",
+        "Ruby's Grasp",
+        "Generator (Harlowe)",
+        "Blacksmith (Amon)",
+        "Instigator (Rafa)",
+        "Undead Eye (Vex)"
+      ],
+      "prerequisite": "His Vile Sanctum (Story)",
+      "location": "Terminus Range, Windspear, Umbral Foundry",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Moon-Maddened Callis"
+      ],
+      "items": [
+        "Ohm I Got",
+        "Gamma Void"
+      ],
+      "prerequisite": "Another Day, Another Universe (Story)",
+      "location": "Carcadia Burn, Fallen Crown, Elpis Orbital Shatterfield",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Queen Callis"
+      ],
+      "items": [
+        "Queen's Rest",
+        "Pandoran Memento",
+        "Esgrimidor (Rafa)",
+        "Skeptic (Harlowe)",
+        "Illusionist (Vex)",
+        "Viking (Amon)"
+      ],
+      "prerequisite": "Her Flaming Vision (Story)",
+      "location": "Carcadia Burn, Fallen Crown, Moon-Called Throne",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Primordial Guardian Radix"
+      ],
+      "items": [
+        "Anarchy",
+        "Adrenaline Pump",
+        "Teen Witch (Vex)",
+        "Scientist (Harlowe)",
+        "Grenazerker (Rafa)",
+        "Forge Master (Amon)"
+      ],
+      "prerequisite": "Acquire the Carcadia Burn Vault Key Fragments",
+      "location": "Carcadia Burn, Grindstone of the Worthy, Arch of Radix",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Leader Willem"
+      ],
+      "items": [
+        "Firepot",
+        "Zipper",
+        "Rainbow Vomit"
+      ],
+      "prerequisite": "Enter the Electi Pt. 1 (Side) Enter the Electi Pt. 2 (Side) The Council Divided (Side) A Traitor Within (Side) The Mole's Gambit (Side)",
+      "location": "Carcadia Burn, Grindstone of the Worthy, The Excrucible",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Fractis"
+      ],
+      "items": [
+        "Chuck",
+        "Protean Cell",
+        "UAV"
+      ],
+      "prerequisite": "N/A",
+      "location": "Carcadia Burn, Grindstone of the Worthy, \"The Crawlcroft\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Genone"
+      ],
+      "items": [
+        "Oscar Mike",
+        "Recursive"
+      ],
+      "prerequisite": "Fault Finding (Side)",
+      "location": "Carcadia Burn, Lopside, The Yawning Yard",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Pango & Bango"
+      ],
+      "items": [
+        "Stray",
+        "Phantom Flame",
+        "Prince Harming"
+      ],
+      "prerequisite": "N/A",
+      "location": "Carcadia Burn, Lopside, \"Tendercage\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Gruntubulous Vork, Baby Grunt, Lil Grunt (Rippa Roadbirds)"
+      ],
+      "items": [
+        "Spinning Blade",
+        "Wombo Combo"
+      ],
+      "prerequisite": "N/A",
+      "location": "Carcadia Burn, Ruined Sumplands, \"Saw's Clench\" Ripper Drill Site",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Rocken Roller"
+      ],
+      "items": [
+        "AF1000",
+        "San Saba Songbird"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Carcadia Burn, Ruined Sumplands, \"Trinket Crevass\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Driller Hole"
+      ],
+      "items": [
+        "Katagawa's Revenge",
+        "Fuse",
+        "G.M.R."
+      ],
+      "prerequisite": "Unpaid Tab (Story)",
+      "location": "Carcadia Burn, Tonnage Peel, Queen's Cradle",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Axemaul"
+      ],
+      "items": [
+        "Bod",
+        "Kill Spring",
+        "Buzz Axe"
+      ],
+      "prerequisite": "Crystal Brawl (Story)",
+      "location": "Dominion, Carcadia District, \"The Toil of Spoiling Vis\" Abandoned Auger Mine",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Bio-Thresher Omega"
+      ],
+      "items": [
+        "Bugbear",
+        "Truck"
+      ],
+      "prerequisite": "One Gassy Issue (Side) + One Slimey Issue (Side)",
+      "location": "Dominion, Fades District",
+      "region": null
+    },
+    {
+      "bosses": [
+        "CorrupTed, Experiment 42, Experiment 1709 (Vile Ted & The Experiments)"
+      ],
+      "items": [
+        "Goalkeeper",
+        "Seventh Sense"
+      ],
+      "prerequisite": "Below the Surface (Side)",
+      "location": "Dominion, Terminus District",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Timekeeper"
+      ],
+      "items": [
+        "Timekeeper's New Shield",
+        "Borstel Ballista",
+        "Symmetry"
+      ],
+      "prerequisite": "The Timekeeper's Order (Story)",
+      "location": "Dominion, Terminus District, Upper Dominion",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Primordial Guardian Timekeeper"
+      ],
+      "items": [
+        "Plasma Coil",
+        "Star Helix"
+      ],
+      "prerequisite": "The Timekeeper's Order (Story)",
+      "location": "Dominion, Terminus District, Upper Dominion",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Arjay"
+      ],
+      "items": [
+        "None (bugged?)"
+      ],
+      "prerequisite": "Secret of the Vault (Story)",
+      "location": "Dominion, Terminus District, Upper Dominion",
+      "region": null
+    },
+    {
+      "bosses": [
+        "Directive-O"
+      ],
+      "items": [
+        "Whiskey Foxtrot",
+        "Bonnie & Clyde",
+        "Rowan's Charge"
+      ],
+      "prerequisite": "N/A",
+      "location": "Dominion, Terminus District, \"Ironwall Resolve\" Order Bunker",
+      "region": null
+    },
+    {
+      "bosses": [
+        "N/A"
+      ],
+      "items": [
+        "Slippy"
+      ],
+      "prerequisite": "N/A",
+      "location": "Fish and get lucky",
+      "region": null
+    },
+    {
+      "bosses": [
+        "N/A"
+      ],
+      "items": [
+        "Cold Shoulder"
+      ],
+      "prerequisite": "N/A",
+      "location": "Moxxi's Tip Jar",
+      "region": null
+    },
+    {
+      "bosses": [
+        "N/A"
+      ],
+      "items": [
+        "Sweet Embrace"
+      ],
+      "prerequisite": "N/A",
+      "location": "Moxxi's Tip Jar",
+      "region": null
+    }
+  ],
+  "bosses": {
+    "Splashzone": [
+      "Firewerks",
+      "Jelly",
+      "Lead Balloon"
+    ],
+    "Voraxis / \"Quake Thresher\"": [
+      "Buoy",
+      "Darkbeast",
+      "Potato Thower IV"
+    ],
+    "The Oppressor": [
+      "Asher's Rise",
+      "Blood Analyser",
+      "Streamer"
+    ],
+    "Bio-Bulkhead": [
+      "Budget Deity",
+      "Sho Kunai",
+      "Waterfall"
+    ],
+    "Primordial Guardian Inceptus": [
+      "Avatar (Vex)",
+      "Elementalist (Amon)",
+      "Extra Medium",
+      "Filantropo (Rafa)",
+      "Husky Friend",
+      "Ravenfire"
+    ],
+    "Backhive": [
+      "Mega Triple Bypass",
+      "Stop Gap"
+    ],
+    "Horace": [
+      "Aegon's Dream",
+      "Lucky Clover",
+      "Pacemaker"
+    ],
+    "Sydney Pointylegs": [
+      "Disc Jockey",
+      "Noisy Cricket",
+      "Swarm"
+    ],
+    "Sludgemaw": [
+      "Birt's Bees",
+      "Kickballer",
+      "Onion"
+    ],
+    "Idolator Sol": [
+      "Bio-Robot (Harlowe) Furnace (Amon) Technomancer (Vex)",
+      "Dancer (Rafa)",
+      "Golden God",
+      "Goremaster",
+      "Onslaught"
+    ],
+    "Frank the Furnace, Hank the Welder, Sal the Engineer (Foundry Freaks)": [
+      "Bloody Lumberjack",
+      "Chaumurky",
+      "Chuck"
+    ],
+    "Mimicron": [
+      "Complex Root",
+      "Luty Madlad",
+      "UAV"
+    ],
+    "Core Observer": [
+      "Bully",
+      "Defibrillator",
+      "Divided Focus"
+    ],
+    "Skyspanner Kratch": [
+      "Hellfire",
+      "Hoarder",
+      "Linebacker"
+    ],
+    "Saddleback, Immortal Boneface (Meathead Riders)": [
+      "Hellwalker",
+      "Lucian's Flank",
+      "War Paint"
+    ],
+    "Shadowpelt": [
+      "Slippy",
+      "Sparky Shield",
+      "Vamoose"
+    ],
+    "Skull Orchid": [
+      "Oak-Aged Cask",
+      "Roach"
+    ],
+    "Callous Harbringer of Annihilating Death": [
+      "Atling Gun",
+      "Hot Slugger",
+      "Kaleidosplode"
+    ],
+    "Bramblesong": [
+      "Convergence",
+      "Disco"
+    ],
+    "Battle Wagon": [
+      "Compleation",
+      "Finnity XXX-L"
+    ],
+    "Primordial Guardian Origo": [
+      "Atomic Driver (Harlowe)",
+      "Bottled Lightning",
+      "Buster (Rafa)",
+      "Kaoson",
+      "Kindread Spirits (Vex)",
+      "Shatterwight (Amon)",
+      "Watts 4 Dinner"
+    ],
+    "The Divisioner": [
+      "Inkling",
+      "Sideshow"
+    ],
+    "Vile Prototype": [
+      "Heavyweight",
+      "King's Gambit",
+      "Rangefinder"
+    ],
+    "Vile Lictor": [
+      "Blacksmith (Amon)",
+      "Blockbuster",
+      "Generator (Harlowe)",
+      "Instigator (Rafa)",
+      "Ruby's Grasp",
+      "Super Soldier",
+      "Undead Eye (Vex)"
+    ],
+    "Moon-Maddened Callis": [
+      "Gamma Void",
+      "Ohm I Got"
+    ],
+    "Queen Callis": [
+      "Esgrimidor (Rafa)",
+      "Illusionist (Vex)",
+      "Pandoran Memento",
+      "Queen's Rest",
+      "Skeptic (Harlowe)",
+      "Viking (Amon)"
+    ],
+    "Primordial Guardian Radix": [
+      "Adrenaline Pump",
+      "Anarchy",
+      "Forge Master (Amon)",
+      "Grenazerker (Rafa)",
+      "Scientist (Harlowe)",
+      "Teen Witch (Vex)"
+    ],
+    "Leader Willem": [
+      "Firepot",
+      "Rainbow Vomit",
+      "Zipper"
+    ],
+    "Fractis": [
+      "Chuck",
+      "Protean Cell",
+      "UAV"
+    ],
+    "Genone": [
+      "Oscar Mike",
+      "Recursive"
+    ],
+    "Pango & Bango": [
+      "Phantom Flame",
+      "Prince Harming",
+      "Stray"
+    ],
+    "Gruntubulous Vork, Baby Grunt, Lil Grunt (Rippa Roadbirds)": [
+      "Spinning Blade",
+      "Wombo Combo"
+    ],
+    "Rocken Roller": [
+      "AF1000",
+      "San Saba Songbird"
+    ],
+    "Driller Hole": [
+      "Fuse",
+      "G.M.R.",
+      "Katagawa's Revenge"
+    ],
+    "Axemaul": [
+      "Bod",
+      "Buzz Axe",
+      "Kill Spring"
+    ],
+    "Bio-Thresher Omega": [
+      "Bugbear",
+      "Truck"
+    ],
+    "CorrupTed, Experiment 42, Experiment 1709 (Vile Ted & The Experiments)": [
+      "Goalkeeper",
+      "Seventh Sense"
+    ],
+    "Timekeeper": [
+      "Borstel Ballista",
+      "Symmetry",
+      "Timekeeper's New Shield"
+    ],
+    "Primordial Guardian Timekeeper": [
+      "Plasma Coil",
+      "Star Helix"
+    ],
+    "Arjay": [
+      "None (bugged?)"
+    ],
+    "Directive-O": [
+      "Bonnie & Clyde",
+      "Rowan's Charge",
+      "Whiskey Foxtrot"
+    ],
+    "N/A": [
+      "Cold Shoulder",
+      "Slippy",
+      "Sweet Embrace"
+    ]
+  }
+}
