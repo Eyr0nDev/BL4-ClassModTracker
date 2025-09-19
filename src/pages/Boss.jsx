@@ -1,3 +1,4 @@
+// src/pages/Boss.jsx
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import bosses from "../data/bosses.json";
@@ -6,11 +7,22 @@ import Header from "../components/Header";
 
 export default function Boss() {
   const { slug } = useParams();
+
+  // Find a boss that exactly matches the slug
   const boss = bosses.find((b) => b.slug === slug);
 
   if (boss) {
-    return <BossTracker bossName={boss.name} drops={boss.drops} />;
+    // Pass group members (if any) to the tracker
+    return (
+      <BossTracker
+        bossName={boss.name}
+        drops={boss.drops}
+        alsoFrom={boss.bosses || []}
+      />
+    );
   }
+
+  // 404 fallback
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl">

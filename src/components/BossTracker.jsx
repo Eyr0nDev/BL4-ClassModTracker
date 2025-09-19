@@ -1,8 +1,8 @@
+// src/components/BossTracker.jsx
 // Responsive boss loot tracker
 // - Mobile (<sm): stacked cards, no horizontal scroll
 // - Desktop (sm+): table layout
 // Includes per-item rates + combined "Any dedicated drop" rate
-
 
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "./Header";
@@ -14,7 +14,7 @@ function slugify(str) {
     .replace(/(^-|-$)/g, "");
 }
 
-export default function BossTracker({ bossName, drops }) {
+export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
   // Prepend "No drop" to the list
   const COLS = useMemo(() => ["No drop", ...drops], [drops]);
   const STORAGE_KEY = `bl4-bosstracker-${slugify(bossName)}`;
@@ -60,8 +60,7 @@ export default function BossTracker({ bossName, drops }) {
 
   const dedicatedPct = pct(dedicatedTotal);
 
-  const dotClass = (ci) =>
-    ci === 0 ? "bg-slate-400" : "bg-amber-400";
+  const dotClass = (ci) => (ci === 0 ? "bg-slate-400" : "bg-amber-400");
 
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-4 sm:p-6 md:p-10">
@@ -72,6 +71,16 @@ export default function BossTracker({ bossName, drops }) {
             if (confirm("Reset this boss tracker?")) setCounts({});
           }}
         />
+
+        {/* Group members (if any) */}
+        {alsoFrom.length > 0 && (
+          <div className="mb-3 sm:mb-4 text-[12px] sm:text-sm text-slate-400">
+            Includes:{" "}
+            <span className="text-slate-300">
+              {alsoFrom.join(", ")}
+            </span>
+          </div>
+        )}
 
         {/* ===== MOBILE: stacked cards (no horizontal scroll) ===== */}
         <section className="sm:hidden space-y-3">

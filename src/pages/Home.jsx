@@ -1,24 +1,58 @@
+// src/pages/Home.jsx
 import { Link } from "react-router-dom";
+import { useState, useMemo } from "react";
 import Header from "../components/Header";
 import bosses from "../data/bosses.json";
 
 export default function Home() {
-  // First, the fixed “Class Mods” card, then JSON-driven boss cards.
-  const cards = [
-    {
-      type: "classmods",
-      title: "Class Mod Loot Tracker",
-      chips: ["Per VH", "Rarity tracker"],
-      href: "/classmods",
-    },
-    ...bosses.map((b) => ({
-      type: "boss",
-      title: b.name,
-      chips: b.drops, // we’ll render as little rounded chips
-      href: `/boss/${b.slug}`,
-      desc: `Track runs and drops.`,
-    })),
-  ];
+  const [query, setQuery] = useState("");
+
+  // Build cards (ClassMods + Bosses) and filter by search
+  const cards = useMemo(() => {
+    const base = [
+      {
+        type: "classmods",
+        title: "Class Mod Loot Tracker",
+        chips: ["Per VH", "Rarity tracker"],
+        href: "/classmods",
+        desc: "Track rarity distribution per Vault Hunter.",
+      },
+      ...bosses.map((b) => ({
+        type: "boss",
+        title: b.name,           // group or solo display name
+        chips: b.drops,          // drops as chips
+        members: b.bosses || [], // optional: for grouped bosses
+        href: `/boss/${b.slug}`,
+        desc: "Track runs and drops.",
+      })),
+    ];
+
+    const q = query.trim().toLowerCase();
+    if (!q) return base;
+
+    return base.filter((c) => {
+      // classmods should not match unless the query fits its title/chips
+      const inTitle = c.title.toLowerCase().includes(q);
+      const inChips =
+        Array.isArray(c.chips) &&
+        c.chips.some((chip) => chip.toLowerCase().includes(q));
+
+      // For grouped bosses, also search member names
+      const inMembers =
+        Array.isArray(c.members) &&
+        c.members.some((m) => m.toLowerCase().includes(q));
+
+      return inTitle || inChips || inMembers;
+    });
+  }, [query]);
+
+  // helper: compact member list like “Frank…, Hank…, +1 more”
+  const renderMembers = (members = []) => {
+    if (!members.length) return null;
+    const shown = members.slice(0, 2).join(", ");
+    const extra = members.length - 2;
+    return extra > 0 ? `${shown}, +${extra} more` : shown;
+  };
 
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-6 sm:p-10">
@@ -31,15 +65,15 @@ export default function Home() {
             htmlFor="home-search"
             className="block text-sm text-slate-400 mb-2"
           >
-            Search bosses or drops
+            Search bosses, groups, or drops
           </label>
           <input
             id="home-search"
             type="search"
-            placeholder="e.g., Splashzone, Lead Balloon, Hellwalker…"
+            placeholder="e.g., Splashzone, Hellwalker, Foundry Freaks…"
             className="w-full rounded-xl bg-slate-900/60 border border-slate-700/60 px-4 py-3 text-slate-200 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-amber-400/30"
-            // (wire up later when we add search behaviour)
-            onChange={() => {}}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
         </div>
 
@@ -54,11 +88,18 @@ export default function Home() {
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40
                          transform-gpu hover:-translate-y-[2px]"
             >
-              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight mb-2">
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight mb-1">
                 {c.title}
               </h2>
 
-              {/* Chips row (consistent for both types) */}
+              {/* If grouped, show compact member list under the title */}
+              {Array.isArray(c.members) && c.members.length > 0 && (
+                <p className="text-[12px] text-slate-400 mb-2">
+                  Includes: {renderMembers(c.members)}
+                </p>
+              )}
+
+              {/* Chips row (drops) */}
               {Array.isArray(c.chips) && c.chips.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {c.chips.slice(0, 6).map((chip) => (
@@ -75,7 +116,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Secondary line (kept subtle so UI isn’t “Christmas tree”) */}
               {c.desc && (
                 <p className="text-slate-400 text-sm leading-relaxed">
                   {c.desc}
