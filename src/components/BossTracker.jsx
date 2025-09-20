@@ -3,8 +3,10 @@
 // - Mobile (<sm): stacked cards, no horizontal scroll
 // - Desktop (sm+): table layout
 // Includes per-item rates + combined "Any dedicated drop" rate
+// Long-press (pointer events) subtracts reliably on mobile
+// FIX: remove onClick (double-fire); pointer tap handles Shift too
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "./Header";
 
 function slugify(str) {
@@ -14,12 +16,129 @@ function slugify(str) {
     .replace(/(^-|-$)/g, "");
 }
 
-export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
-  // Prepend "No drop" to the list
+/** Long-press helpers (no UI changes) */
+function useLongPress({ onTap, onLongPress, pressMs = 500, moveTolerance = 10 }) {
+  const stateRef = useRef({
+    timer: null,
+    startX: 0,
+    startY: 0,
+    longFired: false,
+    cancelled: false,
+    pointerId: null,
+    target: null,
+  });
+
+  const clearTimer = () => {
+    const s = stateRef.current;
+    if (s.timer) {
+      clearTimeout(s.timer);
+      s.timer = null;
+    }
+  };
+
+  const onPointerDown = (e) => {
+    const s = stateRef.current;
+    s.longFired = false;
+    s.cancelled = false;
+    s.pointerId = e.pointerId;
+    s.target = e.currentTarget;
+    s.startX = e.clientX;
+    s.startY = e.clientY;
+
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {}
+
+    clearTimer();
+    s.timer = setTimeout(() => {
+      s.timer = null;
+      if (!s.cancelled && !s.longFired) {
+        s.longFired = true;
+        try {
+          if (navigator.vibrate) navigator.vibrate(10);
+        } catch {}
+        onLongPress?.(e);
+      }
+    }, pressMs);
+  };
+
+  const onPointerMove = (e) => {
+    const s = stateRef.current;
+    if (s.timer == null) return;
+    const dx = Math.abs(e.clientX - s.startX);
+    const dy = Math.abs(e.clientY - s.startY);
+    if (dx > moveTolerance || dy > moveTolerance) {
+      s.cancelled = true;
+      clearTimer();
+    }
+  };
+
+  const finish = (e) => {
+    const s = stateRef.current;
+    try {
+      s.target?.releasePointerCapture?.(s.pointerId);
+    } catch {}
+    const hadTimer = !!s.timer;
+    clearTimer();
+    if (!s.cancelled) {
+      if (s.longFired) {
+        // already handled
+      } else if (hadTimer) {
+        onTap?.(e); // single source of truth; no onClick used
+      }
+    }
+  };
+
+  const onPointerUp = finish;
+  const onPointerCancel = finish;
+  const onPointerLeave = finish;
+
+  const onContextMenu = (e) => {
+    // prevent Android long-press menu
+    e.preventDefault();
+  };
+
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel,
+    onPointerLeave,
+    onContextMenu,
+  };
+}
+
+/** Count button wired to +1 tap, −1 long-press, Shift modifies tap on desktop */
+function CountButton({ value, onInc, onDec, title }) {
+  const handlers = useLongPress({
+    onTap: (e) => {
+      // Desktop nicety: Shift = −1, else +1
+      if (e.shiftKey) onDec();
+      else onInc();
+    },
+    onLongPress: () => onDec(),
+    pressMs: 500,
+    moveTolerance: 12,
+  });
+
+  return (
+    <button
+      className="w-full h-11 rounded-xl border grid place-items-center select-none transition
+                 border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+      title={title}
+      // IMPORTANT: no onClick here (avoids +2 on desktop)
+      {...handlers}
+    >
+      <span className="text-base font-semibold tabular-nums">{value}</span>
+    </button>
+  );
+}
+
+export default function BossTracker({ bossName, drops, members }) {
   const COLS = useMemo(() => ["No drop", ...drops], [drops]);
   const STORAGE_KEY = `bl4-bosstracker-${slugify(bossName)}`;
 
-  // --- storage ---
   const load = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -37,7 +156,6 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
     } catch {}
   }, [counts, STORAGE_KEY]);
 
-  // --- helpers ---
   const inc = (ci, d = 1) =>
     setCounts((p) => {
       const n = Math.max(0, (p[ci] || 0) + d);
@@ -51,7 +169,6 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
 
   const pct = (n) => (totalRuns ? Math.round((n / totalRuns) * 1000) / 10 : 0);
 
-  // Combined dedicated (exclude "No drop" at index 0)
   const dedicatedTotal = useMemo(() => {
     let sum = 0;
     for (let i = 1; i < COLS.length; i++) sum += counts[i] || 0;
@@ -61,30 +178,25 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
   const dedicatedPct = pct(dedicatedTotal);
 
   const dotClass = (ci) => (ci === 0 ? "bg-slate-400" : "bg-amber-400");
+  const hint = "Tap: +1 • Hold: −1 • Shift (desktop): −1";
 
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-4 sm:p-6 md:p-10">
       <div className="mx-auto w-full max-w-5xl">
         <Header
           title={`${bossName} Loot Tracker`}
+          subtitle={
+            Array.isArray(members) && members.length > 0
+              ? `Group members: ${members.join(", ")}`
+              : undefined
+          }
           onReset={() => {
             if (confirm("Reset this boss tracker?")) setCounts({});
           }}
         />
 
-        {/* Group members (if any) */}
-        {alsoFrom.length > 0 && (
-          <div className="mb-3 sm:mb-4 text-[12px] sm:text-sm text-slate-400">
-            Includes:{" "}
-            <span className="text-slate-300">
-              {alsoFrom.join(", ")}
-            </span>
-          </div>
-        )}
-
-        {/* ===== MOBILE: stacked cards (no horizontal scroll) ===== */}
+        {/* ===== MOBILE ===== */}
         <section className="sm:hidden space-y-3">
-          {/* Boss label */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/40 border border-slate-700/60">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <span className="font-medium text-slate-200">{bossName}</span>
@@ -109,24 +221,16 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
                     </p>
                   </div>
 
-                  <button
-                    className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60
-                               bg-slate-900/60 hover:bg-slate-900
-                               grid place-items-center select-none transition
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                    title="Tap: +1 • Long-press: −1 (or use Shift on desktop)"
-                    aria-label={`Increment ${label}`}
-                    onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      inc(ci, -1);
-                    }}
-                  >
-                    <span className="text-base font-semibold tabular-nums">{n}</span>
-                  </button>
+                  <div className="shrink-0 w-16">
+                    <CountButton
+                      value={n}
+                      onInc={() => inc(ci, +1)}
+                      onDec={() => inc(ci, -1)}
+                      title={hint}
+                    />
+                  </div>
                 </div>
 
-                {/* progress */}
                 <div className="mt-3 h-2 w-full bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
                   <div
                     className="h-full bg-amber-500 rounded-full"
@@ -137,7 +241,6 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
             );
           })}
 
-          {/* Combined dedicated rate */}
           <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-center text-[11px] text-slate-300">
             Any dedicated drop:&nbsp;
             <span className="font-semibold tabular-nums">
@@ -162,7 +265,7 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
           </div>
         </section>
 
-        {/* ===== DESKTOP: table ===== */}
+        {/* ===== DESKTOP ===== */}
         <section className="hidden sm:block">
           <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
             <div className="relative overflow-x-auto">
@@ -200,16 +303,12 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
                       const v = counts[ci] || 0;
                       return (
                         <td key={ci} className="px-2 py-2 text-center">
-                          <button
-                            className="w-full h-11 rounded-xl border grid place-items-center select-none transition
-                                       border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
-                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                            title="Click: +1 • Shift+Click: −1"
-                            aria-label={`Increment ${COLS[ci]}`}
-                            onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
-                          >
-                            <span className="text-base font-semibold tabular-nums">{v}</span>
-                          </button>
+                          <CountButton
+                            value={v}
+                            onInc={() => inc(ci, +1)}
+                            onDec={() => inc(ci, -1)}
+                            title={hint}
+                          />
                         </td>
                       );
                     })}
@@ -248,7 +347,6 @@ export default function BossTracker({ bossName, drops, alsoFrom = [] }) {
               </table>
             </div>
 
-            {/* Combined dedicated rate strip */}
             <div className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-center text-slate-300 border-t border-slate-800/80 bg-black/20">
               Any dedicated drop:&nbsp;
               <span className="font-semibold tabular-nums">

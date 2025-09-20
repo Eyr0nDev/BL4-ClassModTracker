@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../components/Header";
 
 import VexIcon from "../assets/Vex.png";
@@ -55,6 +55,38 @@ export default function ClassMods() {
   );
   const grandTotal = useMemo(() => colTotals.reduce((a, b) => a + b, 0), [colTotals]);
 
+  const rarityMix = (ci) => {
+    const total = colTotals[ci] || 0;
+    return ROWS.map((r, ri) => {
+      const n = state.counts[keyOf(ri, ci)] || 0;
+      const pct = total ? Math.round((n / total) * 1000) / 10 : 0;
+      return { label: r, n, pct, style: rarityStyles[r] };
+    });
+  };
+
+  // --- Press-and-hold to decrement (mobile) ---
+  const holdTimer = useRef(null);
+  const didHold = useRef(false);
+  const HOLD_MS = 450;
+
+  const onPressStart = (ri, ci) => {
+    didHold.current = false;
+    clearTimeout(holdTimer.current);
+    holdTimer.current = setTimeout(() => {
+      inc(ri, ci, -1);      // long press = −1
+      didHold.current = true;
+    }, HOLD_MS);
+  };
+
+  const onPressEnd = (e) => {
+    clearTimeout(holdTimer.current);
+    if (didHold.current) {
+      // we already decremented via long-press — swallow the click
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 flex items-start justify-center p-4 sm:p-6 md:p-10">
       <div className="w-full max-w-5xl">
@@ -75,10 +107,10 @@ export default function ClassMods() {
                   <button
                     key={name}
                     onClick={() => setActiveCol(activeCol === idx ? null : idx)}
-                    className={`h-9 w-full rounded-full border text-xs sm:text-sm transition-colors duration-200 ${
+                    className={`h-9 w-full rounded-full border text-xs sm:text-sm transition ${
                       activeCol === idx
                         ? "bg-amber-500/20 border-amber-400/60 text-amber-300 ring-2 ring-amber-400/40"
-                        : "bg-slate-800/60 border-slate-700/60 text-slate-200 hover:border-amber-400/50 hover:text-amber-300 hover:bg-slate-800"
+                        : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 text-slate-200"
                     }`}
                   >
                     {name}
@@ -91,7 +123,7 @@ export default function ClassMods() {
 
         {/* === Card / Table === */}
         <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
-          <div className="relative">
+          <div className="relative overflow-x-hidden">
             <table className="w-full text-sm">
               <colgroup>
                 <col />
@@ -137,6 +169,7 @@ export default function ClassMods() {
                       {state.cols.map((_, ci) => {
                         const v = state.counts[keyOf(ri, ci)] || 0;
                         const active = activeCol === ci;
+
                         return (
                           <td key={ci} className={`px-1 sm:px-2 md:px-3 py-2 text-center ${active ? "bg-amber-500/5":""}`}>
                             <button
@@ -145,8 +178,21 @@ export default function ClassMods() {
                                   ? "border-amber-400/70 ring-2 ring-amber-400/40 bg-slate-900/70"
                                   : "border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:ring-2 focus:ring-amber-500/40"
                               }`}
-                              title="Click: +1; Shift+Click: −1"
-                              onClick={(e)=> inc(ri, ci, e.shiftKey ? -1 : 1)}
+                              title="Click: +1 • Shift+Click: −1 • Hold (touch): −1"
+                              onClick={(e) => {
+                                if (didHold.current) {
+                                  // long-press already decremented; swallow this click
+                                  didHold.current = false;
+                                  return;
+                                }
+                                inc(ri, ci, e.shiftKey ? -1 : 1);
+                              }}
+                              onPointerDown={() => onPressStart(ri, ci)}
+                              onPointerUp={onPressEnd}
+                              onPointerLeave={() => clearTimeout(holdTimer.current)}
+                              onPointerCancel={() => clearTimeout(holdTimer.current)}
+                              onContextMenu={(e) => e.preventDefault()}
+                              aria-label={`Increment ${r} for ${state.cols[ci]}`}
                             >
                               <span className="text-sm sm:text-lg font-semibold tabular-nums">{v}</span>
                             </button>
@@ -187,6 +233,7 @@ export default function ClassMods() {
                                            bg-black/95 text-white text-[11px] sm:text-xs rounded-md shadow-lg
                                            border border-slate-700 px-2 py-1.5
                                            left-1/2 -translate-x-1/2 mt-2"
+                                style={{ top: "calc(var(--mouse-y, 0px) + 16px)" }}
                               >
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-left">
                                   {mix.map(({label, n, pct, style}) => (
