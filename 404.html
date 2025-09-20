@@ -4,16 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Same SEO defaults as index.html -->
+    <!-- SEO -->
     <meta
       name="description"
       content="VaultDrops is a Borderlands 4 loot tracker. Track boss drops, class mods, and loot rates with clean stats. Fast, mobile-friendly, no accounts needed."
     />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <title>VaultDrops — Borderlands 4 Loot Trackers</title>
-
-    <!-- Canonical should still point to the site root -->
-    <link rel="canonical" href="https://vaultdrops.app/" />
+    <link rel="canonical" href="https://vaultdrops.app/">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -39,6 +37,7 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Vite will rewrite this to the built bundle when 404.html is at project root -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
