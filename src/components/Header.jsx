@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import logoSrc from "../assets/borderlands4-logo.png";
+import logoSrc from "../assets/vaultdropssimple.png";
 
 export default function Header({ title, onReset }) {
   return (

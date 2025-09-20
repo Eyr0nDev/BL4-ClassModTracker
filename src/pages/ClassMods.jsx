@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
+import usePageMeta from "../hooks/usePageMeta";
 
 import VexIcon from "../assets/Vex.png";
 import RafaIcon from "../assets/Rafa.png";
@@ -38,6 +39,13 @@ function saveState(state) {
 }
 
 export default function ClassMods() {
+  usePageMeta({
+    title: "VaultDrops — Class Mods Tracker",
+    description:
+      "Track Class Mod drops by Vault Hunter with rarity breakdowns. Simple counters, clean stats, and local save — perfect for Borderlands 4 farming.",
+    canonicalPath: "/classmods",
+  });
+
   const [state, setState] = useState(() => loadState());
   const [activeCol, setActiveCol] = useState(null);
   useEffect(() => saveState(state), [state]);
@@ -62,29 +70,6 @@ export default function ClassMods() {
       const pct = total ? Math.round((n / total) * 1000) / 10 : 0;
       return { label: r, n, pct, style: rarityStyles[r] };
     });
-  };
-
-  // --- Press-and-hold to decrement (mobile) ---
-  const holdTimer = useRef(null);
-  const didHold = useRef(false);
-  const HOLD_MS = 450;
-
-  const onPressStart = (ri, ci) => {
-    didHold.current = false;
-    clearTimeout(holdTimer.current);
-    holdTimer.current = setTimeout(() => {
-      inc(ri, ci, -1);      // long press = −1
-      didHold.current = true;
-    }, HOLD_MS);
-  };
-
-  const onPressEnd = (e) => {
-    clearTimeout(holdTimer.current);
-    if (didHold.current) {
-      // we already decremented via long-press — swallow the click
-      e.preventDefault();
-      e.stopPropagation();
-    }
   };
 
   return (
@@ -169,7 +154,6 @@ export default function ClassMods() {
                       {state.cols.map((_, ci) => {
                         const v = state.counts[keyOf(ri, ci)] || 0;
                         const active = activeCol === ci;
-
                         return (
                           <td key={ci} className={`px-1 sm:px-2 md:px-3 py-2 text-center ${active ? "bg-amber-500/5":""}`}>
                             <button
@@ -178,21 +162,8 @@ export default function ClassMods() {
                                   ? "border-amber-400/70 ring-2 ring-amber-400/40 bg-slate-900/70"
                                   : "border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:ring-2 focus:ring-amber-500/40"
                               }`}
-                              title="Click: +1 • Shift+Click: −1 • Hold (touch): −1"
-                              onClick={(e) => {
-                                if (didHold.current) {
-                                  // long-press already decremented; swallow this click
-                                  didHold.current = false;
-                                  return;
-                                }
-                                inc(ri, ci, e.shiftKey ? -1 : 1);
-                              }}
-                              onPointerDown={() => onPressStart(ri, ci)}
-                              onPointerUp={onPressEnd}
-                              onPointerLeave={() => clearTimeout(holdTimer.current)}
-                              onPointerCancel={() => clearTimeout(holdTimer.current)}
-                              onContextMenu={(e) => e.preventDefault()}
-                              aria-label={`Increment ${r} for ${state.cols[ci]}`}
+                              title="Click: +1; Shift+Click: −1"
+                              onClick={(e)=> inc(ri, ci, e.shiftKey ? -1 : 1)}
                             >
                               <span className="text-sm sm:text-lg font-semibold tabular-nums">{v}</span>
                             </button>

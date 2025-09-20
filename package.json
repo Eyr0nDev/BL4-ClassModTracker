@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
+"scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "predeploy": "vite build",
+    "prebuild": "node scripts/generate-sitemap.js",
+    "predeploy": "node scripts/generate-sitemap.js && vite build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

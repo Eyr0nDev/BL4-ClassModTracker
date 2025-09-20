@@ -1,18 +1,21 @@
-// src/pages/Boss.jsx
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import bosses from "../data/bosses.json";
 import BossTracker from "../components/BossTracker";
 import Header from "../components/Header";
+import usePageMeta from "../hooks/usePageMeta";
 
 export default function Boss() {
   const { slug } = useParams();
-
-  // Find a boss that exactly matches the slug
   const boss = bosses.find((b) => b.slug === slug);
 
   if (boss) {
-    // Pass group members (if any) to the tracker
+    usePageMeta({
+      title: `VaultDrops — ${boss.name} Loot Tracker`,
+      description: `Track loot drops and runs for ${boss.name} in Borderlands 4.`,
+      canonicalPath: `/boss/${slug}`,
+    });
+
     return (
       <BossTracker
         bossName={boss.name}
@@ -23,6 +26,12 @@ export default function Boss() {
   }
 
   // 404 fallback
+  usePageMeta({
+    title: "VaultDrops — Boss not found",
+    description: "This boss could not be found. Check the URL or browse the full list on VaultDrops.",
+    canonicalPath: `/boss/${slug}`,
+  });
+
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-6 sm:p-10">
       <div className="mx-auto w-full max-w-5xl">

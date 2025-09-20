@@ -1,10 +1,17 @@
-// src/pages/Home.jsx
 import { Link } from "react-router-dom";
 import { useState, useMemo } from "react";
 import Header from "../components/Header";
 import bosses from "../data/bosses.json";
+import usePageMeta from "../hooks/usePageMeta";
 
 export default function Home() {
+  usePageMeta({
+    title: "VaultDrops — Borderlands 4 Loot Trackers",
+    description:
+      "VaultDrops is a Borderlands 4 loot tracker. Search bosses and dedicated drops, or track Class Mods by Vault Hunter. Fast, mobile-friendly, no accounts.",
+    canonicalPath: "/",
+  });
+
   const [query, setQuery] = useState("");
 
   // Build cards (ClassMods + Bosses) and filter by search
@@ -31,17 +38,13 @@ export default function Home() {
     if (!q) return base;
 
     return base.filter((c) => {
-      // classmods should not match unless the query fits its title/chips
       const inTitle = c.title.toLowerCase().includes(q);
       const inChips =
         Array.isArray(c.chips) &&
         c.chips.some((chip) => chip.toLowerCase().includes(q));
-
-      // For grouped bosses, also search member names
       const inMembers =
         Array.isArray(c.members) &&
         c.members.some((m) => m.toLowerCase().includes(q));
-
       return inTitle || inChips || inMembers;
     });
   }, [query]);
