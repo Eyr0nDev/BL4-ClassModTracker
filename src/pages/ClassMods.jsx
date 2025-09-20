@@ -1,3 +1,4 @@
+// src/pages/ClassMods.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import usePageMeta from "../hooks/usePageMeta";
@@ -52,13 +53,55 @@ export default function ClassMods() {
 
   const keyOf = (r, c) => `${r}-${c}`;
   const inc = (r, c, d = 1) =>
-    setState(p => ({
+    setState((p) => ({
       ...p,
-      counts: { ...p.counts, [keyOf(r, c)]: Math.max(0, (p.counts[keyOf(r, c)] || 0) + d) }
+      counts: {
+        ...p.counts,
+        [keyOf(r, c)]: Math.max(0, (p.counts[keyOf(r, c)] || 0) + d),
+      },
     }));
 
+  // --- Long-press handlers (mobile-friendly decrement) ---
+  // Same pattern as on BossTracker: hold ~350ms to decrement once.
+  function pressHandlers(ri, ci) {
+    let timer = null;
+    let longPressed = false;
+
+    const clear = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    return {
+      onPointerDown: () => {
+        longPressed = false;
+        timer = setTimeout(() => {
+          longPressed = true;
+          inc(ri, ci, -1);
+        }, 350);
+      },
+      onPointerUp: () => clear(),
+      onPointerLeave: () => clear(),
+      onContextMenu: (e) => {
+        // prevent mobile context menu interfering with long-press
+        e.preventDefault();
+      },
+      onClick: (e) => {
+        // If it wasn’t a long press, treat as click (+1 or Shift −1)
+        if (!longPressed) {
+          inc(ri, ci, e.shiftKey ? -1 : 1);
+        }
+      },
+    };
+  }
+
   const colTotals = useMemo(
-    () => state.cols.map((_, ci) => state.rows.reduce((s, _, ri) => s + (state.counts[keyOf(ri, ci)] || 0), 0)),
+    () =>
+      state.cols.map((_, ci) =>
+        state.rows.reduce((s, _, ri) => s + (state.counts[keyOf(ri, ci)] || 0), 0)
+      ),
     [state]
   );
   const grandTotal = useMemo(() => colTotals.reduce((a, b) => a + b, 0), [colTotals]);
@@ -154,6 +197,7 @@ export default function ClassMods() {
                       {state.cols.map((_, ci) => {
                         const v = state.counts[keyOf(ri, ci)] || 0;
                         const active = activeCol === ci;
+                        const handlers = pressHandlers(ri, ci);
                         return (
                           <td key={ci} className={`px-1 sm:px-2 md:px-3 py-2 text-center ${active ? "bg-amber-500/5":""}`}>
                             <button
@@ -162,8 +206,8 @@ export default function ClassMods() {
                                   ? "border-amber-400/70 ring-2 ring-amber-400/40 bg-slate-900/70"
                                   : "border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:ring-2 focus:ring-amber-500/40"
                               }`}
-                              title="Click: +1; Shift+Click: −1"
-                              onClick={(e)=> inc(ri, ci, e.shiftKey ? -1 : 1)}
+                              title="Click: +1 • Shift+Click: −1 • Long-press: −1"
+                              {...handlers}
                             >
                               <span className="text-sm sm:text-lg font-semibold tabular-nums">{v}</span>
                             </button>
