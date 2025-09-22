@@ -1,26 +1,27 @@
-// Responsive boss loot tracker
-// - Mobile (<sm): stacked cards, no horizontal scroll
-// - Desktop (sm+): table layout
-//   * If many columns (>7 including "No drop"): split into two stacked half-tables to avoid horizontal scroll
-// Includes per-item rates + combined "Any dedicated drop" rate
+// Responsive boss loot tracker with community averages (Supabase)
+// - Mobile: stacked cards (no horizontal scroll)
+// - Desktop: table
+// - “Publish” sends your local counts (per boss) to Supabase
+// - Community panel aggregates all submissions, shows Wilson CI
+// - NEW: Runs adjustment so multi-drop runs don’t skew totals
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Header from "./Header";
+import { supabase } from "../lib/supabase";
+import { getClientId } from "../lib/clientId";
+import { wilsonCI } from "../lib/stats";
 
 function slugify(str) {
-  return String(str)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  return String(str).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-export default function BossTracker({ bossName, drops, members = [] }) {
+export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }) {
   // Prepend "No drop" to the list
   const COLS = useMemo(() => ["No drop", ...drops], [drops]);
   const STORAGE_KEY = `bl4-bosstracker-${slugify(bossName)}`;
 
-  // --- storage ---
-  const load = () => {
+  // --- storage helpers ---
+  function loadCounts() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
@@ -28,14 +29,26 @@ export default function BossTracker({ bossName, drops, members = [] }) {
     } catch {
       return {};
     }
-  };
-  const [counts, setCounts] = useState(load);
+  }
+  function loadRunAdjust() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Number.isFinite(parsed?.runAdjust) ? parsed.runAdjust : 0;
+    } catch {
+      return 0;
+    }
+  }
 
+  const [counts, setCounts] = useState(loadCounts);
+  const [runAdjust, setRunAdjust] = useState(loadRunAdjust);
+
+  // persist both
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ counts }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ counts, runAdjust }));
     } catch {}
-  }, [counts, STORAGE_KEY]);
+  }, [counts, runAdjust, STORAGE_KEY]);
 
   // --- helpers ---
   const inc = (ci, d = 1) =>
@@ -44,10 +57,15 @@ export default function BossTracker({ bossName, drops, members = [] }) {
       return { ...p, [ci]: n };
     });
 
-  const totalRuns = useMemo(
+  const adjustRuns = (d) => setRunAdjust((v) => v + d);
+
+  const rawRuns = useMemo(
     () => COLS.reduce((s, _, ci) => s + (counts[ci] || 0), 0),
     [COLS, counts]
   );
+
+  // total runs = raw (sum of columns) + manual adjustment (clamped at >= 0)
+  const totalRuns = Math.max(0, rawRuns + (runAdjust || 0));
 
   const pct = (n) => (totalRuns ? Math.round((n / totalRuns) * 1000) / 10 : 0);
 
@@ -59,122 +77,131 @@ export default function BossTracker({ bossName, drops, members = [] }) {
   }, [COLS, counts]);
   const dedicatedPct = pct(dedicatedTotal);
 
+  // --- publish to Supabase ---
+  const [pubState, setPubState] = useState({ loading: false, ok: false, err: "" });
+
+  const publish = useCallback(async () => {
+    if (!bossSlug) {
+      setPubState({ loading: false, ok: false, err: "Missing boss key." });
+      return;
+    }
+    if (totalRuns === 0) {
+      setPubState({ loading: false, ok: false, err: "Nothing to publish yet." });
+      return;
+    }
+    setPubState({ loading: true, ok: false, err: "" });
+
+    const client_hash = getClientId();
+    const payload = {
+      boss_slug: bossSlug,
+      client_hash,
+      total_runs: totalRuns,   // <-- adjusted total
+      counts_json: counts,
+      run_adjust: runAdjust,   // harmless if column doesn’t exist
+      submitted_at: new Date().toISOString(),
+      app_ver: "web-1",
+    };
+
+    const { error } = await supabase
+      .from("submissions")
+      .upsert(payload, { onConflict: "boss_slug,client_hash" });
+
+    if (error) {
+      setPubState({ loading: false, ok: false, err: error.message || "Publish failed." });
+    } else {
+      setPubState({ loading: false, ok: true, err: "" });
+      fetchCommunity();
+    }
+  }, [bossSlug, counts, totalRuns, runAdjust]);
+
+  // --- community rates ---
+  const [community, setCommunity] = useState({
+    loading: true,
+    err: "",
+    submissions: 0,
+    sampleRuns: 0,
+    perCol: [], // [{label, n, pct, moe}]
+    any: { pct: 0, moe: 0, n: 0 },
+  });
+
+  const fetchCommunity = useCallback(async () => {
+    if (!bossSlug) return;
+    setCommunity((p) => ({ ...p, loading: true, err: "" }));
+    const { data, error } = await supabase
+      .from("submissions")
+      .select("counts_json,total_runs")
+      .eq("boss_slug", bossSlug);
+
+    if (error) {
+      setCommunity((p) => ({ ...p, loading: false, err: error.message || "Failed to load community stats." }));
+      return;
+    }
+
+    const submissions = data.length;
+    const sums = new Array(COLS.length).fill(0);
+    let totalAllRuns = 0;
+
+    for (const row of data) {
+      const c = row.counts_json || {};
+      totalAllRuns += row.total_runs || 0;
+      for (let i = 0; i < COLS.length; i++) {
+        sums[i] += c[i] || 0;
+      }
+    }
+
+    const perCol = COLS.map((label, i) => {
+      const n = sums[i] || 0;
+      const ci = wilsonCI(n, totalAllRuns || 0);
+      return { label, n, pct: ci.p * 100, moe: ci.moe };
+    });
+
+    // any dedicated = sum of i>=1
+    const anyN = sums.slice(1).reduce((a, b) => a + b, 0);
+    const anyCI = wilsonCI(anyN, totalAllRuns || 0);
+
+    setCommunity({
+      loading: false,
+      err: "",
+      submissions,
+      sampleRuns: totalAllRuns,
+      perCol,
+      any: { pct: anyCI.p * 100, moe: anyCI.moe, n: anyN },
+    });
+  }, [bossSlug, COLS]);
+
+  useEffect(() => {
+    fetchCommunity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bossSlug]);
+
   const dotClass = (ci) => (ci === 0 ? "bg-slate-400" : "bg-amber-400");
 
-  // ===== Desktop wide-mode splitting =====
-  const WIDE_THRESHOLD = 8; // number of result columns including "No drop"
-  const isWide = COLS.length > 7; // switch to two halves when over 7 columns
-
-  const firstCount = Math.ceil(COLS.length / 2);
-  const firstIdxs = Array.from({ length: firstCount }, (_, i) => i);
-  const secondIdxs = Array.from(
-    { length: COLS.length - firstCount },
-    (_, i) => i + firstCount
-  );
-
-  // Small helper to render one compact desktop table for a subset of column indexes
-  const DesktopHalfTable = ({ colIdxs, showBoss = false, topLabel = "" }) => (
-    <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
-      <div className="relative overflow-x-hidden">
-        <table className="w-full text-sm">
-          <colgroup>
-            <col className="w-[200px]" />
-            {colIdxs.map((_, i) => (
-              <col key={i} className="w-[7rem] md:w-[7.5rem]" />
-            ))}
-          </colgroup>
-
-          <thead className="bg-black/30 backdrop-blur">
-            <tr>
-              <th className="text-left px-3 sm:px-4 py-3 text-slate-400">
-                {topLabel || "Boss / Result"}
-              </th>
-              {colIdxs.map((ci) => (
-                <th key={ci} className="px-2 py-2 text-center text-slate-200 font-semibold">
-                  {COLS[ci]}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr className="border-t border-slate-800/80 hover:bg-white/5 transition-colors">
-              <td className="px-3 sm:px-4 py-3 align-middle">
-                {showBoss ? (
-                  <div className="flex flex-col gap-1.5">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full sm:border bg-slate-800/40 border-slate-700/60">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                      <span className="font-medium text-slate-200">{bossName}</span>
-                    </div>
-                    {Array.isArray(members) && members.length > 0 && (
-                      <p className="text-xs text-slate-400">
-                        Includes: {members.join(", ")}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  // Keep height consistent if not showing boss again
-                  <div className="h-[2.25rem]" />
-                )}
-              </td>
-
-              {colIdxs.map((ci) => {
-                const v = counts[ci] || 0;
-                return (
-                  <td key={ci} className="px-2 py-2 text-center">
-                    <button
-                      className="w-full h-11 rounded-xl border grid place-items-center select-none transition
-                                 border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
-                                 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                      title="Click: +1 • Shift+Click or Right-Click: −1"
-                      aria-label={`Increment ${COLS[ci]}`}
-                      onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        inc(ci, -1);
-                      }}
-                    >
-                      <span className="text-base font-semibold tabular-nums">{v}</span>
-                    </button>
-                  </td>
-                );
-              })}
-            </tr>
-          </tbody>
-
-          <tfoot className="border-t border-slate-800/80">
-            <tr>
-              <td className="px-3 sm:px-4 py-3 text-slate-400 text-xs sm:text-sm">
-                Drop rate (of all runs)
-              </td>
-              {colIdxs.map((ci) => {
-                const n = counts[ci] || 0;
-                const p = pct(n);
-                return (
-                  <td key={ci} className="px-2 py-3 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-sm sm:text-base font-bold tabular-nums">
-                        {p.toFixed(1)}%
-                      </span>
-                      <span className="text-[10px] sm:text-[11px] text-slate-400">
-                        Total: {n}
-                      </span>
-                      <div className="mt-1 h-2 w-28 md:w-32 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-                        <div
-                          style={{ width: `${p}%` }}
-                          className="h-full bg-amber-500 rounded-full"
-                        />
-                      </div>
-                    </div>
-                  </td>
-                );
-              })}
-            </tr>
-          </tfoot>
-        </table>
+  function RunsAdjustPill() {
+    return (
+      <div
+        className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/60 bg-slate-800/60 px-2.5 py-1 text-[11px]"
+        title="Use this if a single run dropped multiple items (or to correct a misclick). Total runs = sum of counters ± this adjustment."
+      >
+        <span className="text-slate-300">Runs:</span>
+        <button
+          className="px-1.5 rounded-md border border-slate-700/60 hover:bg-slate-700/50"
+          onClick={() => adjustRuns(-1)}
+        >
+          −1
+        </button>
+        <span className="tabular-nums text-slate-200">{totalRuns}</span>
+        <button
+          className="px-1.5 rounded-md border border-slate-700/60 hover:bg-slate-700/50"
+          onClick={() => adjustRuns(+1)}
+        >
+          +1
+        </button>
+        {runAdjust !== 0 && (
+          <span className="ml-1 text-slate-400">(adj {runAdjust > 0 ? "+" : ""}{runAdjust})</span>
+        )}
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-4 sm:p-6 md:p-10">
@@ -182,29 +209,45 @@ export default function BossTracker({ bossName, drops, members = [] }) {
         <Header
           title={`${bossName} Loot Tracker`}
           onReset={() => {
-            if (confirm("Reset this boss tracker?")) setCounts({});
+            if (confirm("Reset this boss tracker?")) {
+              setCounts({});
+              setRunAdjust(0);
+            }
           }}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              {alsoFrom.length > 0 && (
+                <div className="hidden sm:block text-xs text-slate-400 mr-2">
+                  Also includes: <span className="text-slate-300">{alsoFrom.join(", ")}</span>
+                </div>
+              )}
+              <button
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 shadow border border-emerald-400/30 text-sm disabled:opacity-60"
+                onClick={publish}
+                disabled={pubState.loading}
+                title="Publish your current counters to VaultDrops (anonymous). Re-publishing updates your previous submission."
+              >
+                {pubState.loading ? "Publishing…" : pubState.ok ? "Published ✓" : "Publish"}
+              </button>
+            </div>
+          }
         />
 
-        {/* ===== MOBILE: stacked cards (no horizontal scroll) ===== */}
+        {/* ===== MOBILE: stacked cards ===== */}
         <section className="sm:hidden space-y-3">
-          {/* Boss label */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/40 border border-slate-700/60">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <span className="font-medium text-slate-200">{bossName}</span>
           </div>
-          {Array.isArray(members) && members.length > 0 && (
-            <p className="text-xs text-slate-400">Includes: {members.join(", ")}</p>
+          {alsoFrom.length > 0 && (
+            <p className="text-[11px] text-slate-400">Also includes: {alsoFrom.join(", ")}</p>
           )}
 
           {COLS.map((label, ci) => {
             const n = counts[ci] || 0;
             const p = pct(n);
             return (
-              <div
-                key={ci}
-                className="rounded-xl bg-[#0f0f11] border border-slate-800/80 shadow px-3 py-3"
-              >
+              <div key={ci} className="rounded-xl bg-[#0f0f11] border border-slate-800/80 shadow px-3 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-slate-200 font-semibold truncate flex items-center gap-2">
@@ -217,11 +260,8 @@ export default function BossTracker({ bossName, drops, members = [] }) {
                   </div>
 
                   <button
-                    className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60
-                               bg-slate-900/60 hover:bg-slate-900
-                               grid place-items-center select-none transition
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                    title="Tap: +1 • Long-press or Right-Click: −1 (Shift on desktop)"
+                    className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 grid place-items-center select-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+                    title="Tap: +1 • Long-press: −1 (or use Shift on desktop)"
                     aria-label={`Increment ${label}`}
                     onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
                     onContextMenu={(e) => {
@@ -233,200 +273,187 @@ export default function BossTracker({ bossName, drops, members = [] }) {
                   </button>
                 </div>
 
-                {/* progress */}
                 <div className="mt-3 h-2 w-full bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-                  <div
-                    className="h-full bg-amber-500 rounded-full"
-                    style={{ width: `${p}%` }}
-                  />
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${p}%` }} />
                 </div>
               </div>
             );
           })}
 
-          {/* Combined dedicated rate */}
           <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-center text-[11px] text-slate-300">
             Any dedicated drop:&nbsp;
-            <span className="font-semibold tabular-nums">
-              {dedicatedPct.toFixed(1)}%
-            </span>{" "}
-            <span className="text-slate-400">
-              (Total: {dedicatedTotal} / Runs: {totalRuns})
-            </span>
+            <span className="font-semibold tabular-nums">{dedicatedPct.toFixed(1)}%</span>{" "}
+            <span className="text-slate-400">(Total: {dedicatedTotal} / Runs: {totalRuns})</span>
             <div className="mt-2 h-2 w-full bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-              <div
-                className="h-full bg-amber-400 rounded-full"
-                style={{ width: `${dedicatedPct}%` }}
-              />
+              <div className="h-full bg-amber-400 rounded-full" style={{ width: `${dedicatedPct}%` }} />
+            </div>
+            <div className="mt-2 flex justify-center">
+              <RunsAdjustPill />
             </div>
           </div>
 
-          <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-center text-[11px] text-slate-400">
-            Runs logged: <span className="font-semibold text-slate-200">{totalRuns}</span>
-          </div>
+          <CommunityPanel community={community} drops={drops} compact />
           <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-[11px] text-slate-500">
             Data saved locally.
           </div>
         </section>
 
-        {/* ===== DESKTOP ===== */}
+        {/* ===== DESKTOP: table ===== */}
         <section className="hidden sm:block">
-          {!isWide ? (
-            // Normal single-table layout
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
-              <div className="relative overflow-x-hidden">
-                <table className="w-full text-sm">
-                  <colgroup>
-                    <col className="w-[200px]" />
-                    {COLS.map((_, i) => (
-                      <col key={i} className="w-[7rem] md:w-[7.5rem]" />
-                    ))}
-                  </colgroup>
+          <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
+            <div className="relative overflow-x-auto">
+              <table className="w-full text-sm">
+                <colgroup>
+                  <col className="w-[180px]" />
+                  {COLS.map((_, i) => (
+                    <col key={i} className="w-[7rem] md:w-[7.5rem]" />
+                  ))}
+                </colgroup>
 
-                  <thead className="bg-black/30 backdrop-blur">
-                    <tr>
-                      <th className="text-left px-3 sm:px-4 py-3 text-slate-400">
-                        Boss / Result
+                <thead className="bg-black/30 backdrop-blur">
+                  <tr>
+                    <th className="text-left px-3 sm:px-4 py-3 text-slate-400">Boss / Result</th>
+                    {COLS.map((c, ci) => (
+                      <th key={ci} className="px-2 py-2 text-center text-slate-200 font-semibold">
+                        {c}
                       </th>
-                      {COLS.map((c, ci) => (
-                        <th key={ci} className="px-2 py-2 text-center text-slate-200 font-semibold">
-                          {c}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
+                    ))}
+                  </tr>
+                </thead>
 
-                  <tbody>
-                    <tr className="border-t border-slate-800/80 hover:bg-white/5 transition-colors">
-                      <td className="px-3 sm:px-4 py-3 align-middle">
-                        <div className="flex flex-col gap-1.5">
-                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full sm:border bg-slate-800/40 border-slate-700/60">
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                            <span className="font-medium text-slate-200">{bossName}</span>
-                          </div>
-                          {Array.isArray(members) && members.length > 0 && (
-                            <p className="text-xs text-slate-400">
-                              Includes: {members.join(", ")}
-                            </p>
-                          )}
+                <tbody>
+                  <tr className="border-t border-slate-800/80 hover:bg-white/5 transition-colors">
+                    <td className="px-3 sm:px-4 py-3 align-middle">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full sm:border bg-slate-800/40 border-slate-700/60">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        <span className="font-medium text-slate-200">{bossName}</span>
+                      </div>
+                      {alsoFrom.length > 0 && (
+                        <div className="mt-1 text-[11px] text-slate-400">
+                          Also includes: {alsoFrom.join(", ")}
                         </div>
-                      </td>
+                      )}
+                    </td>
 
-                      {COLS.map((_, ci) => {
-                        const v = counts[ci] || 0;
-                        return (
-                          <td key={ci} className="px-2 py-2 text-center">
-                            <button
-                              className="w-full h-11 rounded-xl border grid place-items-center select-none transition
-                                         border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
-                                         focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
-                              title="Click: +1 • Shift+Click or Right-Click: −1"
-                              aria-label={`Increment ${COLS[ci]}`}
-                              onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                inc(ci, -1);
-                              }}
-                            >
-                              <span className="text-base font-semibold tabular-nums">{v}</span>
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
+                    {COLS.map((_, ci) => {
+                      const v = counts[ci] || 0;
+                      return (
+                        <td key={ci} className="px-2 py-2 text-center">
+                          <button
+                            className="w-full h-11 rounded-xl border grid place-items-center select-none transition border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+                            title="Click: +1 • Shift+Click: −1"
+                            aria-label={`Increment ${COLS[ci]}`}
+                            onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
+                          >
+                            <span className="text-base font-semibold tabular-nums">{v}</span>
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
 
-                  <tfoot className="border-t border-slate-800/80">
-                    <tr>
-                      <td className="px-3 sm:px-4 py-3 text-slate-400 text-xs sm:text-sm">
-                        Drop rate (of all runs)
-                      </td>
-                      {COLS.map((_, ci) => {
-                        const n = counts[ci] || 0;
-                        const p = pct(n);
-                        return (
-                          <td key={ci} className="px-2 py-3 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className="text-sm sm:text-base font-bold tabular-nums">
-                                {p.toFixed(1)}%
-                              </span>
-                              <span className="text-[10px] sm:text-[11px] text-slate-400">
-                                Total: {n}
-                              </span>
-                              <div className="mt-1 h-2 w-28 md:w-32 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-                                <div
-                                  style={{ width: `${p}%` }}
-                                  className="h-full bg-amber-500 rounded-full"
-                                />
-                              </div>
+                <tfoot className="border-t border-slate-800/80">
+                  <tr>
+                    <td className="px-3 sm:px-4 py-3 text-slate-400 text-xs sm:text-sm">
+                      Drop rate (of all runs)
+                    </td>
+                    {COLS.map((_, ci) => {
+                      const n = counts[ci] || 0;
+                      const p = pct(n);
+                      return (
+                        <td key={ci} className="px-2 py-3 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-sm sm:text-base font-bold tabular-nums">
+                              {p.toFixed(1)}%
+                            </span>
+                            <span className="text-[10px] sm:text-[11px] text-slate-400">Total: {n}</span>
+                            <div className="mt-1 h-2 w-28 md:w-32 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
+                              <div style={{ width: `${p}%` }} className="h-full bg-amber-500 rounded-full" />
                             </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tfoot>
-                </table>
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-center text-slate-300 border-t border-slate-800/80 bg-black/20">
+              Any dedicated drop:&nbsp;
+              <span className="font-semibold tabular-nums">{dedicatedPct.toFixed(1)}%</span>{" "}
+              <span className="text-slate-400">(Total: {dedicatedTotal} / Runs: {totalRuns})</span>
+              <div className="mt-2 mx-auto h-2 w-40 md:w-56 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
+                <div className="h-full bg-amber-400 rounded-full" style={{ width: `${dedicatedPct}%` }} />
               </div>
 
-              {/* Combined dedicated rate strip */}
-              <div className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-center text-slate-300 border-t border-slate-800/80 bg-black/20">
-                Any dedicated drop:&nbsp;
-                <span className="font-semibold tabular-nums">
-                  {dedicatedPct.toFixed(1)}%
-                </span>{" "}
-                <span className="text-slate-400">
-                  (Total: {dedicatedTotal} / Runs: {totalRuns})
-                </span>
-                <div className="mt-2 mx-auto h-2 w-40 md:w-56 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-                  <div
-                    className="h-full bg-amber-400 rounded-full"
-                    style={{ width: `${dedicatedPct}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-400 border-t border-slate-800/80 bg-black/20 text-center">
-                Runs logged: <span className="font-semibold text-slate-200">{totalRuns}</span>
-              </div>
-              <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-500 border-t border-slate-800/80 bg-black/20">
-                Data saved locally.
+              <div className="mt-3 flex justify-center">
+                <RunsAdjustPill />
               </div>
             </div>
-          ) : (
-            // Wide: two compact half-tables stacked
-            <div className="space-y-4">
-              <DesktopHalfTable colIdxs={firstIdxs} showBoss topLabel="Boss / Result (Part 1)" />
-              <DesktopHalfTable colIdxs={secondIdxs} showBoss={false} topLabel="Boss / Result (Part 2)" />
 
-              {/* Combined dedicated rate + totals below both halves */}
-              <div className="rounded-2xl border border-slate-800/80 bg-[#0f0f11] shadow-2xl overflow-visible">
-                <div className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-center text-slate-300 border-b border-slate-800/80 bg-black/20">
-                  Any dedicated drop:&nbsp;
-                  <span className="font-semibold tabular-nums">
-                    {dedicatedPct.toFixed(1)}%
-                  </span>{" "}
-                  <span className="text-slate-400">
-                    (Total: {dedicatedTotal} / Runs: {totalRuns})
-                  </span>
-                  <div className="mt-2 mx-auto h-2 w-40 md:w-56 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-                    <div
-                      className="h-full bg-amber-400 rounded-full"
-                      style={{ width: `${dedicatedPct}%` }}
-                    />
-                  </div>
-                </div>
+            <CommunityPanel community={community} drops={drops} />
 
-                <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-400 bg-black/20 text-center">
-                  Runs logged: <span className="font-semibold text-slate-200">{totalRuns}</span>
-                </div>
-                <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-500 border-t border-slate-800/80 bg-black/20">
-                  Data saved locally.
-                </div>
-              </div>
+            <div className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs text-slate-500 border-t border-slate-800/80 bg-black/20">
+              Data saved locally.
             </div>
+          </div>
+
+          {pubState.err && (
+            <p className="mt-3 text-sm text-red-400">Publish error: {pubState.err}</p>
           )}
         </section>
       </div>
     </main>
+  );
+}
+
+function CommunityPanel({ community, drops, compact = false }) {
+  return (
+    <div className={`border-t border-slate-800/80 bg-black/20 ${compact ? "rounded-xl mt-3 p-3" : "px-3 sm:px-4 py-3"}`}>
+      <div className={`flex ${compact ? "flex-col gap-2" : "items-center justify-between"}`}>
+        <div className="text-slate-300 font-semibold">Community rates</div>
+        <div className="text-[11px] text-slate-400">
+          {community.loading
+            ? "Loading…"
+            : community.err
+            ? community.err
+            : `${community.submissions} submissions • ${community.sampleRuns} runs`}
+        </div>
+      </div>
+
+      {!community.loading && !community.err && community.sampleRuns > 0 && (
+        <div className={`mt-2 ${compact ? "" : "grid grid-cols-1 md:grid-cols-2 gap-3"}`}>
+          <div className={`${compact ? "" : "rounded-xl border border-slate-800/80 bg-[#0f0f11] p-3"}`}>
+            <div className="text-sm text-slate-300 font-semibold mb-1">Any dedicated</div>
+            <div className="text-slate-200 text-base font-bold">
+              {community.any.pct.toFixed(1)}%
+              <span className="text-slate-400 text-xs"> ±{community.any.moe.toFixed(1)}</span>
+              <span className="text-slate-500 text-[11px] ml-2">(n={community.any.n})</span>
+            </div>
+            <div className="mt-2 h-2 w-40 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
+              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${community.any.pct}%` }} />
+            </div>
+          </div>
+
+          <div className={`${compact ? "" : "rounded-xl border border-slate-800/80 bg-[#0f0f11] p-3"}`}>
+            <div className="text-sm text-slate-300 font-semibold mb-2">Per-item rates</div>
+            <div className="flex flex-wrap gap-2">
+              {community.perCol.slice(1).map((c, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center rounded-full border border-slate-700/60 bg-slate-800/60 px-2.5 py-1 text-[11px] text-slate-200"
+                  title={`${c.label}: ${c.pct.toFixed(1)}% ±${c.moe.toFixed(1)} (95% CI, n=${c.n})`}
+                >
+                  {c.label}: {c.pct.toFixed(1)}%
+                  <span className="text-slate-400">&nbsp;±{c.moe.toFixed(1)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

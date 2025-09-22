@@ -1,3 +1,4 @@
+// src/pages/Boss.jsx
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import bosses from "../data/bosses.json";
@@ -18,6 +19,7 @@ export default function Boss() {
 
     return (
       <BossTracker
+        bossSlug={boss.slug}     
         bossName={boss.name}
         drops={boss.drops}
         alsoFrom={boss.bosses || []}
