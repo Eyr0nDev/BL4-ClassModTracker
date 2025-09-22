@@ -1,8 +1,9 @@
 // Responsive boss loot tracker with community averages (Supabase)
 // - Mobile: stacked cards (no horizontal scroll)
 // - Desktop: table
-// - “Publish to VaultDrops” sends your local counts (per boss) to Supabase
+// - “Publish” sends your local counts (per boss) to Supabase
 // - Community panel aggregates all submissions, shows Wilson CI
+// - NEW: Runs adjustment so multi-drop runs don’t skew totals
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Header from "./Header";
@@ -19,8 +20,8 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
   const COLS = useMemo(() => ["No drop", ...drops], [drops]);
   const STORAGE_KEY = `bl4-bosstracker-${slugify(bossName)}`;
 
-  // --- storage ---
-  const load = () => {
+  // --- storage helpers ---
+  function loadCounts() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
@@ -28,14 +29,26 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
     } catch {
       return {};
     }
-  };
-  const [counts, setCounts] = useState(load);
+  }
+  function loadRunAdjust() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Number.isFinite(parsed?.runAdjust) ? parsed.runAdjust : 0;
+    } catch {
+      return 0;
+    }
+  }
 
+  const [counts, setCounts] = useState(loadCounts);
+  const [runAdjust, setRunAdjust] = useState(loadRunAdjust);
+
+  // persist both
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ counts }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ counts, runAdjust }));
     } catch {}
-  }, [counts, STORAGE_KEY]);
+  }, [counts, runAdjust, STORAGE_KEY]);
 
   // --- helpers ---
   const inc = (ci, d = 1) =>
@@ -44,10 +57,15 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
       return { ...p, [ci]: n };
     });
 
-  const totalRuns = useMemo(
+  const adjustRuns = (d) => setRunAdjust((v) => v + d);
+
+  const rawRuns = useMemo(
     () => COLS.reduce((s, _, ci) => s + (counts[ci] || 0), 0),
     [COLS, counts]
   );
+
+  // total runs = raw (sum of columns) + manual adjustment (clamped at >= 0)
+  const totalRuns = Math.max(0, rawRuns + (runAdjust || 0));
 
   const pct = (n) => (totalRuns ? Math.round((n / totalRuns) * 1000) / 10 : 0);
 
@@ -77,13 +95,13 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
     const payload = {
       boss_slug: bossSlug,
       client_hash,
-      total_runs: totalRuns,
+      total_runs: totalRuns,   // <-- adjusted total
       counts_json: counts,
+      run_adjust: runAdjust,   // harmless if column doesn’t exist
       submitted_at: new Date().toISOString(),
       app_ver: "web-1",
     };
 
-    // upsert on (boss_slug, client_hash)
     const { error } = await supabase
       .from("submissions")
       .upsert(payload, { onConflict: "boss_slug,client_hash" });
@@ -92,12 +110,11 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
       setPubState({ loading: false, ok: false, err: error.message || "Publish failed." });
     } else {
       setPubState({ loading: false, ok: true, err: "" });
-      // refresh community aggregates after publish
       fetchCommunity();
     }
-  }, [bossSlug, counts, totalRuns]);
+  }, [bossSlug, counts, totalRuns, runAdjust]);
 
-  // --- community averages ---
+  // --- community rates ---
   const [community, setCommunity] = useState({
     loading: true,
     err: "",
@@ -120,35 +137,33 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
       return;
     }
 
-    let submissions = data.length;
-    let sampleRuns = 0;
-
-    // aggregate counts per column index
+    const submissions = data.length;
     const sums = new Array(COLS.length).fill(0);
+    let totalAllRuns = 0;
+
     for (const row of data) {
       const c = row.counts_json || {};
-      sampleRuns += row.total_runs || 0;
+      totalAllRuns += row.total_runs || 0;
       for (let i = 0; i < COLS.length; i++) {
         sums[i] += c[i] || 0;
       }
     }
 
-    const totalAll = sums.reduce((a, b) => a + b, 0);
     const perCol = COLS.map((label, i) => {
       const n = sums[i] || 0;
-      const ci = wilsonCI(n, totalAll || 0);
+      const ci = wilsonCI(n, totalAllRuns || 0);
       return { label, n, pct: ci.p * 100, moe: ci.moe };
     });
 
     // any dedicated = sum of i>=1
     const anyN = sums.slice(1).reduce((a, b) => a + b, 0);
-    const anyCI = wilsonCI(anyN, totalAll || 0);
+    const anyCI = wilsonCI(anyN, totalAllRuns || 0);
 
     setCommunity({
       loading: false,
       err: "",
       submissions,
-      sampleRuns: totalAll,
+      sampleRuns: totalAllRuns,
       perCol,
       any: { pct: anyCI.p * 100, moe: anyCI.moe, n: anyN },
     });
@@ -161,13 +176,43 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
 
   const dotClass = (ci) => (ci === 0 ? "bg-slate-400" : "bg-amber-400");
 
+  function RunsAdjustPill() {
+    return (
+      <div
+        className="inline-flex items-center gap-1.5 rounded-full border border-slate-700/60 bg-slate-800/60 px-2.5 py-1 text-[11px]"
+        title="Use this if a single run dropped multiple items (or to correct a misclick). Total runs = sum of counters ± this adjustment."
+      >
+        <span className="text-slate-300">Runs:</span>
+        <button
+          className="px-1.5 rounded-md border border-slate-700/60 hover:bg-slate-700/50"
+          onClick={() => adjustRuns(-1)}
+        >
+          −1
+        </button>
+        <span className="tabular-nums text-slate-200">{totalRuns}</span>
+        <button
+          className="px-1.5 rounded-md border border-slate-700/60 hover:bg-slate-700/50"
+          onClick={() => adjustRuns(+1)}
+        >
+          +1
+        </button>
+        {runAdjust !== 0 && (
+          <span className="ml-1 text-slate-400">(adj {runAdjust > 0 ? "+" : ""}{runAdjust})</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#0b0b0d] text-slate-100 p-4 sm:p-6 md:p-10">
       <div className="mx-auto w-full max-w-5xl">
         <Header
           title={`${bossName} Loot Tracker`}
           onReset={() => {
-            if (confirm("Reset this boss tracker?")) setCounts({});
+            if (confirm("Reset this boss tracker?")) {
+              setCounts({});
+              setRunAdjust(0);
+            }
           }}
           rightSlot={
             <div className="flex items-center gap-2">
@@ -188,9 +233,8 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
           }
         />
 
-        {/* ===== MOBILE: stacked cards (no horizontal scroll) ===== */}
+        {/* ===== MOBILE: stacked cards ===== */}
         <section className="sm:hidden space-y-3">
-          {/* Boss label + group */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/40 border border-slate-700/60">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <span className="font-medium text-slate-200">{bossName}</span>
@@ -203,10 +247,7 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
             const n = counts[ci] || 0;
             const p = pct(n);
             return (
-              <div
-                key={ci}
-                className="rounded-xl bg-[#0f0f11] border border-slate-800/80 shadow px-3 py-3"
-              >
+              <div key={ci} className="rounded-xl bg-[#0f0f11] border border-slate-800/80 shadow px-3 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-slate-200 font-semibold truncate flex items-center gap-2">
@@ -219,10 +260,7 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
                   </div>
 
                   <button
-                    className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60
-                               bg-slate-900/60 hover:bg-slate-900
-                               grid place-items-center select-none transition
-                               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+                    className="shrink-0 w-16 h-10 rounded-xl border border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 grid place-items-center select-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
                     title="Tap: +1 • Long-press: −1 (or use Shift on desktop)"
                     aria-label={`Increment ${label}`}
                     onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
@@ -235,7 +273,6 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
                   </button>
                 </div>
 
-                {/* progress */}
                 <div className="mt-3 h-2 w-full bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
                   <div className="h-full bg-amber-500 rounded-full" style={{ width: `${p}%` }} />
                 </div>
@@ -243,7 +280,6 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
             );
           })}
 
-          {/* Combined dedicated rate */}
           <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-center text-[11px] text-slate-300">
             Any dedicated drop:&nbsp;
             <span className="font-semibold tabular-nums">{dedicatedPct.toFixed(1)}%</span>{" "}
@@ -251,9 +287,11 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
             <div className="mt-2 h-2 w-full bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
               <div className="h-full bg-amber-400 rounded-full" style={{ width: `${dedicatedPct}%` }} />
             </div>
+            <div className="mt-2 flex justify-center">
+              <RunsAdjustPill />
+            </div>
           </div>
 
-          {/* Community averages (mobile) */}
           <CommunityPanel community={community} drops={drops} compact />
           <div className="rounded-xl bg-black/20 border border-slate-800/80 px-3 py-2 text-[11px] text-slate-500">
             Data saved locally.
@@ -302,9 +340,7 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
                       return (
                         <td key={ci} className="px-2 py-2 text-center">
                           <button
-                            className="w-full h-11 rounded-xl border grid place-items-center select-none transition
-                                       border-slate-700/60 bg-slate-900/60 hover:bg-slate-900
-                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
+                            className="w-full h-11 rounded-xl border grid place-items-center select-none transition border-slate-700/60 bg-slate-900/60 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40"
                             title="Click: +1 • Shift+Click: −1"
                             aria-label={`Increment ${COLS[ci]}`}
                             onClick={(e) => inc(ci, e.shiftKey ? -1 : 1)}
@@ -344,13 +380,16 @@ export default function BossTracker({ bossSlug, bossName, drops, alsoFrom = [] }
               </table>
             </div>
 
-            {/* Combined dedicated + Community */}
             <div className="px-3 sm:px-4 py-2 text-[11px] sm:text-xs text-center text-slate-300 border-t border-slate-800/80 bg-black/20">
               Any dedicated drop:&nbsp;
               <span className="font-semibold tabular-nums">{dedicatedPct.toFixed(1)}%</span>{" "}
               <span className="text-slate-400">(Total: {dedicatedTotal} / Runs: {totalRuns})</span>
               <div className="mt-2 mx-auto h-2 w-40 md:w-56 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
                 <div className="h-full bg-amber-400 rounded-full" style={{ width: `${dedicatedPct}%` }} />
+              </div>
+
+              <div className="mt-3 flex justify-center">
+                <RunsAdjustPill />
               </div>
             </div>
 
@@ -386,23 +425,18 @@ function CommunityPanel({ community, drops, compact = false }) {
 
       {!community.loading && !community.err && community.sampleRuns > 0 && (
         <div className={`mt-2 ${compact ? "" : "grid grid-cols-1 md:grid-cols-2 gap-3"}`}>
-          {/* Any dedicated */}
           <div className={`${compact ? "" : "rounded-xl border border-slate-800/80 bg-[#0f0f11] p-3"}`}>
             <div className="text-sm text-slate-300 font-semibold mb-1">Any dedicated</div>
             <div className="text-slate-200 text-base font-bold">
               {community.any.pct.toFixed(1)}%
-              <span className="text-slate-400 text-xs"> ±{(community.any.moe).toFixed(1)}</span>
+              <span className="text-slate-400 text-xs"> ±{community.any.moe.toFixed(1)}</span>
               <span className="text-slate-500 text-[11px] ml-2">(n={community.any.n})</span>
             </div>
             <div className="mt-2 h-2 w-40 bg-slate-900 rounded-full border border-slate-700/60 shadow-inner">
-              <div
-                className="h-full bg-emerald-500 rounded-full"
-                style={{ width: `${community.any.pct}%` }}
-              />
+              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${community.any.pct}%` }} />
             </div>
           </div>
 
-          {/* Per item (exclude “No drop”) */}
           <div className={`${compact ? "" : "rounded-xl border border-slate-800/80 bg-[#0f0f11] p-3"}`}>
             <div className="text-sm text-slate-300 font-semibold mb-2">Per-item rates</div>
             <div className="flex flex-wrap gap-2">
