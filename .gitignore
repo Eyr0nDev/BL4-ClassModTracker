@@ -25,3 +25,8 @@ dist-ssr
 # Ignore executables and installers
 *.exe
 *.msi
+# local env
+.env.local
+
+# local env
+.env.local
